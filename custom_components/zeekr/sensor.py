@@ -91,6 +91,7 @@ async def async_setup_entry(
 
             # 🅿️ Парковка
             ZeekrParkDurationSensor(coordinator, vin),
+            ZeekrElectricParkBrakeStatusSensor(coordinator, vin),
 
             # 🎯 Климат
             ZeekrSteeringWheelHeatingStatusSensor(coordinator, vin),
@@ -112,7 +113,7 @@ async def async_setup_entry(
             ZeekrDCChargeStatusDetailedSensor(coordinator, vin),
             ZeekrDCDCStatusSensor(coordinator, vin),
 
-            # ⚡ РАЗРЯДКА V2L/V2H (НОВЫЕ)
+            # ⚡ РАЗРЯДКА V2L/V2H
             ZeekrDischargePowerSensor(coordinator, vin),
             ZeekrDischargeVoltageSensor(coordinator, vin),
             ZeekrDischargeCurrentSensor(coordinator, vin),
@@ -139,9 +140,6 @@ async def async_setup_entry(
 
             # 💡 ОГНИ
             ZeekrLightsStatusSensor(coordinator, vin),
-
-            # 🌫️ КАЧЕСТВО ВОЗДУХА
-            ZeekrAirQualitySensor(coordinator, vin),
 
             # 🔒 ОХРАНА
             ZeekrTheftProtectionSensor(coordinator, vin),
@@ -992,6 +990,32 @@ class ZeekrParkDurationSensor(ZeekrBaseSensor):
         return {}
 
 
+class ZeekrElectricParkBrakeStatusSensor(ZeekrBaseSensor):
+    """Статус электронного тормоза парковки"""
+
+    _attr_name = "Electric Park Brake"
+    _attr_icon = "mdi:hand-left"
+
+    def _get_sensor_type(self) -> str:
+        return "electric_park_brake"
+
+    @property
+    def native_value(self) -> str:
+        """Вернуть статус тормоза парковки"""
+        parser = self._get_parser()
+        if parser:
+            safety = parser.data.get('additionalVehicleStatus', {}).get('drivingSafetyStatus', {})
+            status = int(safety.get('electricParkBrakeStatus', 0))
+
+            status_map = {
+                0: '❌ Выключен',
+                1: '✅ ВКЛЮЧЕН (припаркован)',
+                2: '⚠️ Ошибка',
+            }
+            return status_map.get(status, 'Неизвестно')
+        return None
+
+
 # ==================== 🎯 КЛИМАТ (РАСШИРЕНО) ====================
 
 class ZeekrSteeringWheelHeatingStatusSensor(ZeekrBaseSensor):
@@ -1369,8 +1393,6 @@ class ZeekrFrontShadeSensor(ZeekrBaseSensor):
                 'status': roof['front_shade_status'],
                 'is_open': roof['front_shade_open'],
                 'is_transparent': roof['is_transparent'],
-                'description': 'Затемняющая шторка передней панорамной крыши',
-                'note': 'Позиция 0% = затемнена, 101% = прозрачна (видно небо)',
             }
         return {}
 
@@ -1404,14 +1426,12 @@ class ZeekrRearShadeSensor(ZeekrBaseSensor):
             return {
                 'status': roof['rear_shade_status'],
                 'is_open': roof['rear_shade_open'],
-                'description': 'Затемняющая шторка задней панорамной крыши',
-                'note': 'Позиция 0% = затемнена, 101% = прозрачна (видно небо)',
             }
         return {}
 
 
 class ZeekrRoofStatusSensor(ZeekrBaseSensor):
-    """Статус панорамной крыши (герметична, шторки)"""
+    """Статус панорамной крыши - одно слово с процентом"""
 
     _attr_name = "Panoramic Roof Status"
     _attr_icon = "mdi:car-roof"
@@ -1421,11 +1441,23 @@ class ZeekrRoofStatusSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть полный статус крыши"""
+        """Вернуть простой статус крыши"""
         parser = self._get_parser()
         if parser:
             roof = parser.get_panoramic_roof_status()
-            return roof['description']
+            # Берем среднее значение между передней и задней шторкой
+            avg_pos = (roof['front_shade_position'] + roof['rear_shade_position']) // 2
+
+            if avg_pos >= 100:
+                return f"Прозрачна - {avg_pos}%"
+            elif avg_pos >= 75:
+                return f"Прозрачна - {avg_pos}%"
+            elif avg_pos >= 50:
+                return f"Полупрозрачна - {avg_pos}%"
+            elif avg_pos > 0:
+                return f"Затемнена - {avg_pos}%"
+            else:
+                return f"Затемнена - 0%"
         return None
 
     @property
@@ -1435,14 +1467,11 @@ class ZeekrRoofStatusSensor(ZeekrBaseSensor):
         if parser:
             roof = parser.get_panoramic_roof_status()
             return {
-                'roof_sealed': '✅ Герметична (не пропускает воду, не протекает)',
-                'roof_description': 'Панорамная крыша физически герметична и не может быть открыта',
-                'front_shade': roof['front_shade_status'],
-                'front_position': f"{roof['front_shade_position']}%",
-                'rear_shade': roof['rear_shade_status'],
-                'rear_position': f"{roof['rear_shade_position']}%",
-                'is_transparent': '☀️ МНОГО света' if roof['is_transparent'] else '🌙 ЗАТЕМНЕНО',
-                'is_darkened': roof['is_darkened'],
+                'roof_sealed': '✅ Герметична (не течет)',
+                'front_pos': f"{roof['front_shade_position']}%",
+                'rear_pos': f"{roof['rear_shade_position']}%",
+                'front_status': roof['front_shade_status'],
+                'rear_status': roof['rear_shade_status'],
             }
         return {}
 
@@ -1707,45 +1736,6 @@ class ZeekrLightsStatusSensor(ZeekrBaseSensor):
                 'lo_beam': lights['lo_beam'],
                 'stop_lights': lights['stop_lights'],
                 'is_night_mode': lights['is_night_mode'],
-            }
-        return {}
-
-
-# ==================== КАЧЕСТВО ВОЗДУХА ====================
-
-class ZeekrAirQualitySensor(ZeekrBaseSensor):
-    """Статус качества воздуха в салоне"""
-
-    _attr_name = "Air Quality Alert"
-    _attr_icon = "mdi:alert-circle"
-
-    def _get_sensor_type(self) -> str:
-        return "air_quality_alert"
-
-    @property
-    def native_value(self) -> str:
-        """Вернуть статус качества воздуха"""
-        parser = self._get_parser()
-        if parser:
-            air = parser.get_air_quality_alert()
-            if air['has_alerts']:
-                return air['alerts'][0]
-            return '✅ Качество воздуха нормальное'
-        return None
-
-    @property
-    def extra_state_attributes(self) -> Dict[str, Any]:
-        """Дополнительная информация"""
-        parser = self._get_parser()
-        if parser:
-            air = parser.get_air_quality_alert()
-            pollution = parser.get_pollution_info()
-            return {
-                'pm25': pollution['interior_pm25'],
-                'level': pollution['interior_pm25_level'],
-                'humidity': air['humidity'],
-                'has_alerts': air['has_alerts'],
-                'all_alerts': ' | '.join(air['alerts']) if air['alerts'] else 'Нет предупреждений',
             }
         return {}
 
