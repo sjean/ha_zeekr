@@ -31,125 +31,6 @@ from .entity_categories import get_entity_category
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(
-        hass: HomeAssistant,
-        config_entry: ConfigType,
-        async_add_entities: AddEntitiesCallback,
-) -> None:
-    """Set up Zeekr sensors"""
-
-    coordinator: ZeekrDataCoordinator = hass.data[DOMAIN][config_entry.entry_id]
-
-    entities = []
-
-    # Для каждого автомобиля создаем датчики
-    for vin in coordinator.data.keys():
-        entities.extend([
-            # ==================== ГРУППА 1: СТАТУС И ОХРАНА ====================
-            ZeekrLastUpdateTimeSensor(coordinator, vin),
-            ZeekrBatterySensor(coordinator, vin),
-            ZeekrTheftProtectionSensor(coordinator, vin),
-            ZeekrElectricParkBrakeStatusSensor(coordinator, vin),
-
-            # ==================== ОСНОВНЫЕ ДАТЧИКИ ==========
-            ZeekrAuxBatteryPercentageSensor(coordinator, vin),
-            ZeekrAuxBatteryVoltageSensor(coordinator, vin),
-            ZeekrDistanceToEmptySensor(coordinator, vin),
-            ZeekrInteriorTempSensor(coordinator, vin),
-            ZeekrExteriorTempSensor(coordinator, vin),
-            ZeekrOdometerSensor(coordinator, vin),
-            ZeekrCurrentSpeedSensor(coordinator, vin),
-            ZeekrAverageSpeedSensor(coordinator, vin),
-            ZeekrDaysToServiceSensor(coordinator, vin),
-            ZeekrDistanceToServiceSensor(coordinator, vin),
-            ZeekrTirePressureDriverSensor(coordinator, vin),
-            ZeekrTirePressurePassengerSensor(coordinator, vin),
-            ZeekrTirePressureDriverRearSensor(coordinator, vin),
-            ZeekrTirePressurePassengerRearSensor(coordinator, vin),
-            ZeekrInteriorPM25Sensor(coordinator, vin),
-
-            # ========== РАСШИРЕННЫЕ ДАТЧИКИ ==========
-            # 🔋 Батарея (расширено)
-            ZeekrStateOfChargeSensor(coordinator, vin),
-            ZeekrStateOfHealthSensor(coordinator, vin),
-            ZeekrHVTempLevelSensor(coordinator, vin),
-            ZeekrTimeToFullChargeSensor(coordinator, vin),
-
-            # 🌡️ Температура шин
-            ZeekrTireTempDriverSensor(coordinator, vin),
-            ZeekrTireTempPassengerSensor(coordinator, vin),
-            ZeekrTireTempDriverRearSensor(coordinator, vin),
-            ZeekrTireTempPassengerRearSensor(coordinator, vin),
-
-            # 🚙 Движение
-            ZeekrTripMeter1Sensor(coordinator, vin),
-            ZeekrTripMeter2Sensor(coordinator, vin),
-
-            # 🔧 Обслуживание
-            ZeekrEngineHoursToServiceSensor(coordinator, vin),
-            ZeekrBrakeFluidLevelSensor(coordinator, vin),
-            ZeekrWasherFluidLevelSensor(coordinator, vin),
-            ZeekrEngineCoolantLevelSensor(coordinator, vin),
-
-            # 💨 Воздух
-            ZeekrExteriorPM25LevelSensor(coordinator, vin),
-            ZeekrRelativeHumiditySensor(coordinator, vin),
-
-            # 🅿️ Парковка
-            ZeekrParkDurationSensor(coordinator, vin),
-
-            # 🎯 Климат
-            ZeekrSteeringWheelHeatingStatusSensor(coordinator, vin),
-            ZeekrDriverHeatingStatusSensor(coordinator, vin),
-            ZeekrPassengerHeatingStatusSensor(coordinator, vin),
-
-            # 📍 Координаты
-            ZeekrLatitudeSensor(coordinator, vin),
-            ZeekrLongitudeSensor(coordinator, vin),
-            ZeekrAltitudeSensor(coordinator, vin),
-
-            # 🔐 Информация
-            ZeekrPropulsionTypeSensor(coordinator, vin),
-
-            # ⚡ Зарядка
-            ZeekrDCChargePowerSensor(coordinator, vin),
-            ZeekrDCChargeVoltageExtendedSensor(coordinator, vin),
-            ZeekrDCChargeCurrentExtendedSensor(coordinator, vin),
-            ZeekrDCChargeStatusDetailedSensor(coordinator, vin),
-            ZeekrDCDCStatusSensor(coordinator, vin),
-
-            # ⚡ РАЗРЯДКА V2L/V2H
-            ZeekrDischargePowerSensor(coordinator, vin),
-            ZeekrDischargeVoltageSensor(coordinator, vin),
-            ZeekrDischargeCurrentSensor(coordinator, vin),
-            ZeekrChargerStateSensor(coordinator, vin),
-
-            # ========== ПАНОРАМНАЯ КРЫША (ИСПРАВЛЕННАЯ) ====================
-            ZeekrFrontShadeSensor(coordinator, vin),
-            ZeekrRearShadeSensor(coordinator, vin),
-            ZeekrRoofStatusSensor(coordinator, vin),
-
-            # 🚗 ДВИЖЕНИЕ
-            ZeekrSpeedSensor(coordinator, vin),
-            ZeekrBrakeStatusSensor(coordinator, vin),
-            ZeekrEnergyRecoverySensor(coordinator, vin),
-            ZeekrGearStatusSensor(coordinator, vin),
-
-            # 🔒 РЕМНИ БЕЗОПАСНОСТИ
-            ZeekrSeatbeltDriverSensor(coordinator, vin),
-            ZeekrSeatbeltPassengerSensor(coordinator, vin),
-            ZeekrSeatbeltStatusSensor(coordinator, vin),
-
-            # 📡 GPS
-            ZeekrGpsStatusSensor(coordinator, vin),
-
-            # 💡 ОГНИ
-            ZeekrLightsStatusSensor(coordinator, vin),
-        ])
-
-    async_add_entities(entities)
-    _LOGGER.info(f"✅ Added {len(entities)} sensors total for {len(coordinator.data)} vehicles")
-
 
 # ==================== БАЗОВЫЙ КЛАСС ====================
 
@@ -257,7 +138,7 @@ class ZeekrBaseSensor(CoordinatorEntity, SensorEntity):
         self._attr_unique_id = f"{DOMAIN}_{vin}_{self._get_sensor_type()}"
 
         # 🎯 АВТОМАТИЧЕСКИ УСТАНАВЛИВАЕМ КАТЕГОРИЮ
-        self.
+        self._attr_entity_category = get_entity_category(self._get_sensor_type())
 
         # Информация об устройстве
         self._attr_device_info = {
@@ -1852,3 +1733,123 @@ class ZeekrLightsStatusSensor(ZeekrBaseSensor):
                 'Ночной_режим': lights['is_night_mode'],
             }
         return {}
+
+async def async_setup_entry(
+        hass: HomeAssistant,
+        config_entry: ConfigType,
+        async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up Zeekr sensors"""
+
+    coordinator: ZeekrDataCoordinator = hass.data[DOMAIN][config_entry.entry_id]
+
+    entities = []
+
+    # Для каждого автомобиля создаем датчики
+    for vin in coordinator.data.keys():
+        entities.extend([
+            # ==================== ГРУППА 1: СТАТУС И ОХРАНА ====================
+            ZeekrLastUpdateTimeSensor(coordinator, vin),
+            ZeekrBatterySensor(coordinator, vin),
+            ZeekrTheftProtectionSensor(coordinator, vin),
+            ZeekrElectricParkBrakeStatusSensor(coordinator, vin),
+
+            # ==================== ОСНОВНЫЕ ДАТЧИКИ ==========
+            ZeekrAuxBatteryPercentageSensor(coordinator, vin),
+            ZeekrAuxBatteryVoltageSensor(coordinator, vin),
+            ZeekrDistanceToEmptySensor(coordinator, vin),
+            ZeekrInteriorTempSensor(coordinator, vin),
+            ZeekrExteriorTempSensor(coordinator, vin),
+            ZeekrOdometerSensor(coordinator, vin),
+            ZeekrCurrentSpeedSensor(coordinator, vin),
+            ZeekrAverageSpeedSensor(coordinator, vin),
+            ZeekrDaysToServiceSensor(coordinator, vin),
+            ZeekrDistanceToServiceSensor(coordinator, vin),
+            ZeekrTirePressureDriverSensor(coordinator, vin),
+            ZeekrTirePressurePassengerSensor(coordinator, vin),
+            ZeekrTirePressureDriverRearSensor(coordinator, vin),
+            ZeekrTirePressurePassengerRearSensor(coordinator, vin),
+            ZeekrInteriorPM25Sensor(coordinator, vin),
+
+            # ========== РАСШИРЕННЫЕ ДАТЧИКИ ==========
+            # 🔋 Батарея (расширено)
+            ZeekrStateOfChargeSensor(coordinator, vin),
+            ZeekrStateOfHealthSensor(coordinator, vin),
+            ZeekrHVTempLevelSensor(coordinator, vin),
+            ZeekrTimeToFullChargeSensor(coordinator, vin),
+
+            # 🌡️ Температура шин
+            ZeekrTireTempDriverSensor(coordinator, vin),
+            ZeekrTireTempPassengerSensor(coordinator, vin),
+            ZeekrTireTempDriverRearSensor(coordinator, vin),
+            ZeekrTireTempPassengerRearSensor(coordinator, vin),
+
+            # 🚙 Движение
+            ZeekrTripMeter1Sensor(coordinator, vin),
+            ZeekrTripMeter2Sensor(coordinator, vin),
+
+            # 🔧 Обслуживание
+            ZeekrEngineHoursToServiceSensor(coordinator, vin),
+            ZeekrBrakeFluidLevelSensor(coordinator, vin),
+            ZeekrWasherFluidLevelSensor(coordinator, vin),
+            ZeekrEngineCoolantLevelSensor(coordinator, vin),
+
+            # 💨 Воздух
+            ZeekrExteriorPM25LevelSensor(coordinator, vin),
+            ZeekrRelativeHumiditySensor(coordinator, vin),
+
+            # 🅿️ Парковка
+            ZeekrParkDurationSensor(coordinator, vin),
+
+            # 🎯 Климат
+            ZeekrSteeringWheelHeatingStatusSensor(coordinator, vin),
+            ZeekrDriverHeatingStatusSensor(coordinator, vin),
+            ZeekrPassengerHeatingStatusSensor(coordinator, vin),
+
+            # 📍 Координаты
+            ZeekrLatitudeSensor(coordinator, vin),
+            ZeekrLongitudeSensor(coordinator, vin),
+            ZeekrAltitudeSensor(coordinator, vin),
+
+            # 🔐 Информация
+            ZeekrPropulsionTypeSensor(coordinator, vin),
+
+            # ⚡ Зарядка
+            ZeekrDCChargePowerSensor(coordinator, vin),
+            ZeekrDCChargeVoltageExtendedSensor(coordinator, vin),
+            ZeekrDCChargeCurrentExtendedSensor(coordinator, vin),
+            ZeekrDCChargeStatusDetailedSensor(coordinator, vin),
+            ZeekrDCDCStatusSensor(coordinator, vin),
+
+            # ⚡ РАЗРЯДКА V2L/V2H
+            ZeekrDischargePowerSensor(coordinator, vin),
+            ZeekrDischargeVoltageSensor(coordinator, vin),
+            ZeekrDischargeCurrentSensor(coordinator, vin),
+            ZeekrChargerStateSensor(coordinator, vin),
+
+            # ========== ПАНОРАМНАЯ КРЫША (ИСПРАВЛЕННАЯ) ====================
+            ZeekrFrontShadeSensor(coordinator, vin),
+            ZeekrRearShadeSensor(coordinator, vin),
+            ZeekrRoofStatusSensor(coordinator, vin),
+
+            # 🚗 ДВИЖЕНИЕ
+            ZeekrSpeedSensor(coordinator, vin),
+            ZeekrBrakeStatusSensor(coordinator, vin),
+            ZeekrEnergyRecoverySensor(coordinator, vin),
+            ZeekrGearStatusSensor(coordinator, vin),
+
+            # 🔒 РЕМНИ БЕЗОПАСНОСТИ
+            ZeekrSeatbeltDriverSensor(coordinator, vin),
+            ZeekrSeatbeltPassengerSensor(coordinator, vin),
+            ZeekrSeatbeltStatusSensor(coordinator, vin),
+
+            # 📡 GPS
+            ZeekrGpsStatusSensor(coordinator, vin),
+
+            # 💡 ОГНИ
+            ZeekrLightsStatusSensor(coordinator, vin),
+        ])
+
+    async_add_entities(entities)
+    _LOGGER.info(f"✅ Added {len(entities)} sensors total for {len(coordinator.data)} vehicles")
+

@@ -86,23 +86,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # Сохраняем coordinator
         hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
-        # ==================== 🎯 СОЗДАЕМ ГРУППЫ ====================
-        _LOGGER.info("📊 Creating sensor groups...")
-        from .helpers import async_create_groups
-
-        for vin in coordinator.data.keys():
-            if vin:  # Проверяем что VIN не пустой
-                success = await async_create_groups(hass, vin)
-                if success:
-                    _LOGGER.info(f"✅ Groups created for {vin}")
-                else:
-                    _LOGGER.warning(f"⚠️ Failed to create groups for {vin}")
-
-        # Устанавливаем platforms
+        # ==================== УСТАНОВКА ПЛАТФОРМ ====================
         await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
         _LOGGER.info(f"✅ Platforms configured: {PLATFORMS}")
 
-        # Регистрируем services
+        # ==================== РЕГИСТРАЦИЯ СЕРВИСОВ ====================
         _register_services(hass, responses_dir)
 
         _LOGGER.info("🎉 Zeekr integration setup COMPLETE!")
@@ -111,6 +99,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     except Exception as err:
         _LOGGER.error(f"❌ Error setting up Zeekr: {err}", exc_info=True)
         return False
+
 
 def _register_services(hass: HomeAssistant, responses_dir: str) -> None:
     """Регистрирует сервисы интеграции"""
