@@ -676,7 +676,26 @@ class VehicleDataParser:
 
     def get_park_info(self) -> Dict[str, Any]:
         """Получает информацию о парковке"""
-        park_time_ms = int(self.data.get('parkTime', {}).get('status', 0))
+        # ✅ НОВАЯ ЗАЩИТА ОТ ПУСТЫХ СТРОК
+        park_time_str = self.data.get('parkTime', {}).get('status', '')
+
+        if not park_time_str or park_time_str == '':
+            return {
+                'is_parked': False,
+                'parked_since': None,
+                'park_duration': 'Не припаркован',
+                'total_seconds': 0,
+            }
+        try:
+            park_time_ms = int(park_time_str)
+        except (ValueError, TypeError):
+            # Если преобразование не удалось, возвращаем "не припаркован"
+            return {
+                'is_parked': False,
+                'parked_since': None,
+                'park_duration': 'Не припаркован',
+                'total_seconds': 0,
+            }
 
         if park_time_ms == 0:
             return {
