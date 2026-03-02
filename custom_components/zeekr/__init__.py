@@ -15,7 +15,6 @@ from .const import DOMAIN
 from .zeekr_api import ZeekrAPI
 from .coordinator import ZeekrDataCoordinator
 from .zeekr_storage import token_storage
-from .group_definitions import get_group_entities_for_vin, SENSOR_GROUPS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -91,9 +90,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
         _LOGGER.info(f"✅ Platforms configured: {PLATFORMS}")
 
-        # Создаем группы датчиков
-        await _setup_entity_groups(hass, coordinator.data)
-
         # Регистрируем services
         _register_services(hass, responses_dir)
 
@@ -103,47 +99,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     except Exception as err:
         _LOGGER.error(f"❌ Error setting up Zeekr: {err}", exc_info=True)
         return False
-
-
-async def _setup_entity_groups(hass: HomeAssistant, vehicles_data: dict) -> None:
-    """Создает группы датчиков для удобной навигации"""
-
-    try:
-        _LOGGER.info("📊 Setting up entity groups...")
-
-        for vin in vehicles_data.keys():
-            if not vin:
-                continue
-
-            _LOGGER.info(f"🚗 Creating groups for VIN: {vin}")
-
-            for group_name in SENSOR_GROUPS.keys():
-                entities = get_group_entities_for_vin(vin, group_name)
-
-                if not entities:
-                    continue
-
-                try:
-                    # Создаем группу
-                    await hass.services.async_call(
-                        "group",
-                        "create",
-                        {
-                            "object_id": f"zeekr_{vin.lower()}_{len(group_name)}",
-                            "name": f"{group_name} ({vin})",
-                            "entities": entities,
-                        }
-                    )
-
-                    _LOGGER.info(f"✅ Created: {group_name} ({len(entities)} entities)")
-
-                except Exception as e:
-                    _LOGGER.error(f"❌ Error creating group {group_name}: {e}")
-
-        _LOGGER.info("✅ Entity groups setup COMPLETE!")
-
-    except Exception as e:
-        _LOGGER.error(f"❌ Error in _setup_entity_groups: {e}", exc_info=True)
 
 
 def _register_services(hass: HomeAssistant, responses_dir: str) -> None:
@@ -223,7 +178,7 @@ def _register_services(hass: HomeAssistant, responses_dir: str) -> None:
     hass.services.async_register(DOMAIN, 'save_response', handle_save_response)
     hass.services.async_register(DOMAIN, 'refresh_and_save', handle_refresh_and_save)
 
-    _LOGGER.info("✅ Services registered")
+    _LOGGER.info("✅ Services registered: save_response, refresh_and_save")
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
