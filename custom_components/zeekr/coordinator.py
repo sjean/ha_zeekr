@@ -61,9 +61,8 @@ class ZeekrDataCoordinator(DataUpdateCoordinator):
                 if success and status:
                     vehicles_data[vin] = status
 
-                    # 🔥 СОХРАНЯЕМ ПОСЛЕДНИЙ ОТВЕТ
-                    self.last_response = status
-                    self._save_response_to_file(vin, status)
+                    # 🔥 АСИНХРОННО сохраняем ответ
+                    await self._async_save_response_to_file(vin, status)
                 else:
                     _LOGGER.warning(f"Failed to fetch status for {vin}")
 
@@ -78,9 +77,11 @@ class ZeekrDataCoordinator(DataUpdateCoordinator):
             _LOGGER.error(f"Error fetching Zeekr data: {err}")
             raise UpdateFailed(f"Error communicating with Zeekr API: {err}")
 
-    def _save_response_to_file(self, vin: str, data: Dict) -> None:
+    async def _async_save_response_to_file(self, vin: str, data: Dict) -> None:
         """
-        Сохраняет ответ сервера в JSON файл
+        ⭐ АСИНХРОННО сохраняет ответ сервера в JSON файл
+
+        Использует executor чтобы не блокировать event loop!
 
         Args:
             vin: VIN номер автомобиля
@@ -89,6 +90,29 @@ class ZeekrDataCoordinator(DataUpdateCoordinator):
         if not self.responses_dir:
             return
 
+        try:
+            # ⭐ АСИНХРОННАЯ операция с помощью executor
+            await self.hass.async_add_executor_job(
+                self._save_response_sync,
+                vin,
+                data
+            )
+
+            self.last_response = data
+            _LOGGER.debug(f"✅ Response auto-saved for {vin}")
+
+        except Exception as e:
+            _LOGGER.error(f"❌ Failed to save response: {e}", exc_info=True)
+
+    def _save_response_sync(self, vin: str, data: Dict) -> None:
+        """
+        Синхронная функция для сохранения файла
+        (выполняется в отдельном потоке через executor)
+
+        Args:
+            vin: VIN номер автомобиля
+            data: Данные ответа от сервера
+        """
         try:
             # Имя файла с датой и временем
             filename = f"zeekr_{vin}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
