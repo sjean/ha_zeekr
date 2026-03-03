@@ -816,6 +816,30 @@ class VehicleDataParser:
             'recovery_status': '⚡ ВОССТАНОВЛЕНИЕ ЭНЕРГИИ' if (is_braking and speed > 0) else 'Нет восстановления',
         }
 
+    def get_ahbc_status(self) -> str:
+        """
+        Получает статус AHBC (Защита от кражи / High Beam Control?)
+        0 - Да (Включено)
+        1 - Нет (Выключено)
+        """
+        # Пытаемся найти ключ 'ahbc' в basicVehicleStatus
+        # Если его там нет, вернем -1
+        basic = self.data.get('basicVehicleStatus', {})
+        ahbc_val = basic.get('ahbc')
+
+        # Если значение не найдено, пробуем искать в корне (на всякий случай)
+        if ahbc_val is None:
+            ahbc_val = self.data.get('ahbc')
+
+        # Логика преобразования
+        # Важно привести к строке или числу для сравнения
+        if str(ahbc_val) == '0':
+            return "Включена"  # ✅ 0 - Да
+        elif str(ahbc_val) == '1':
+            return "Выключена"  # ❌ 1 - Нет
+
+        return "Неизвестно"
+
     # ==================== ПОЛНЫЙ ОТЧЕТ ====================
 
     def get_full_summary(self) -> str:

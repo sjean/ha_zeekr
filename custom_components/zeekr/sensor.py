@@ -26,7 +26,6 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, ICON_BATTERY, ICON_TEMPERATURE, ICON_CAR
 from .coordinator import ZeekrDataCoordinator
 from .vehicle_parser import VehicleDataParser
-from .entity_categories import get_entity_category
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,9 +43,6 @@ class ZeekrBaseSensor(CoordinatorEntity, SensorEntity):
 
         # Уникальный ID для каждого датчика
         self._attr_unique_id = f"{DOMAIN}_{vin}_{self._get_sensor_type()}"
-
-        # 🎯 АВТОМАТИЧЕСКИ УСТАНАВЛИВАЕМ КАТЕГОРИЮ
-        self._attr_entity_category = get_entity_category(self._get_sensor_type())
 
         # Информация об устройстве
         self._attr_device_info = {
@@ -162,35 +158,25 @@ class ZeekrBatterySensor(ZeekrBaseSensor):
 
 
 class ZeekrTheftProtectionSensor(ZeekrBaseSensor):
-    """Статус системы защиты от кражи"""
+    """Сенсор защиты от кражи (AHBC)"""
 
-    _attr_name = "Охрана от кражи"
-    _attr_icon = "mdi:security"
+    _attr_name = "Режим охраны"  # Имя в интерфейсе
+    _attr_icon = "mdi:shield-check"  # Иконка щита
+
+    # Это диагностический сенсор, скрываем его в подменю (не на главной)
+    # Если хочешь на главной - убери эту строку или поставь None
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def _get_sensor_type(self) -> str:
-        return "theft_protection"
+        return "theft_protection_ahbc"
 
     @property
     def native_value(self) -> str:
-        """Вернуть статус защиты"""
+        """Возвращает статус: Включена/Выключена"""
         parser = self._get_parser()
         if parser:
-            theft = parser.get_theft_and_security_status()
-            return theft['theft_protection']
-        return None
-
-    @property
-    def extra_state_attributes(self) -> Dict[str, Any]:
-        """Дополнительная информация"""
-        parser = self._get_parser()
-        if parser:
-            theft = parser.get_theft_and_security_status()
-            return {
-                'Охрана активирована': theft['theft_activated'],
-                'Двигатель заблокирован': theft['engine_locked'],
-                'Время активации': theft['activation_time'],
-            }
-        return {}
+            return parser.get_ahbc_status()
+        return "Недоступно"
 
 
 class ZeekrElectricParkBrakeStatusSensor(ZeekrBaseSensor):
