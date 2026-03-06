@@ -163,10 +163,6 @@ class ZeekrTheftProtectionSensor(ZeekrBaseSensor):
     _attr_name = "Режим охраны"  # Имя в интерфейсе
     _attr_icon = "mdi:shield-check"  # Иконка щита
 
-    # Это диагностический сенсор, скрываем его в подменю (не на главной)
-    # Если хочешь на главной - убери эту строку или поставь None
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
-
     def _get_sensor_type(self) -> str:
         return "theft_protection_ahbc"
 
@@ -183,7 +179,7 @@ class ZeekrElectricParkBrakeStatusSensor(ZeekrBaseSensor):
     """Статус электронного ручного тормоза"""
 
     _attr_name = "Электронный ручной тормоз"
-    _attr_icon = "mdi:hand-left"
+    _attr_icon = "mdi:car-brake-parking"
 
     def _get_sensor_type(self) -> str:
         return "electric_park_brake"
@@ -198,7 +194,7 @@ class ZeekrElectricParkBrakeStatusSensor(ZeekrBaseSensor):
 
             status_map = {
                 0: '❌ Выключен',
-                1: '✅ ВКЛЮЧЕН (припаркована)',
+                1: '✅ Включен (парковка)',
                 2: '⚠️ Ошибка',
             }
             return status_map.get(status, 'Неизвестно')

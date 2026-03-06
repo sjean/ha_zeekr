@@ -231,7 +231,7 @@ class ZeekrTrunkSensor(ZeekrBaseBinarySensor):
 class ZeekrEngineHoodSensor(ZeekrBaseBinarySensor):
     """Engine hood binary sensor"""
 
-    _attr_name = "Engine Hood"
+    _attr_name = "Капот"
     _attr_device_class = BinarySensorDeviceClass.DOOR
     _attr_icon = "mdi:car-door"
 
@@ -251,7 +251,7 @@ class ZeekrEngineHoodSensor(ZeekrBaseBinarySensor):
 class ZeekrDriverWindowSensor(ZeekrBaseBinarySensor):
     """Driver window binary sensor"""
 
-    _attr_name = "Driver Window"
+    _attr_name = "Окно ПЛ"
     _attr_device_class = BinarySensorDeviceClass.WINDOW
     _attr_icon = "mdi:window-closed"
 
@@ -271,7 +271,7 @@ class ZeekrDriverWindowSensor(ZeekrBaseBinarySensor):
 class ZeekrPassengerWindowSensor(ZeekrBaseBinarySensor):
     """Passenger window binary sensor"""
 
-    _attr_name = "Passenger Window"
+    _attr_name = "Окно ПП"
     _attr_device_class = BinarySensorDeviceClass.WINDOW
     _attr_icon = "mdi:window-closed"
 
@@ -291,7 +291,7 @@ class ZeekrPassengerWindowSensor(ZeekrBaseBinarySensor):
 class ZeekrDriverRearWindowSensor(ZeekrBaseBinarySensor):
     """Driver rear window binary sensor"""
 
-    _attr_name = "Driver Rear Window"
+    _attr_name = "Окно ЗЛ"
     _attr_device_class = BinarySensorDeviceClass.WINDOW
     _attr_icon = "mdi:window-closed"
 
@@ -311,7 +311,7 @@ class ZeekrDriverRearWindowSensor(ZeekrBaseBinarySensor):
 class ZeekrPassengerRearWindowSensor(ZeekrBaseBinarySensor):
     """Passenger rear window binary sensor"""
 
-    _attr_name = "Passenger Rear Window"
+    _attr_name = "Окно ЗП"
     _attr_device_class = BinarySensorDeviceClass.WINDOW
     _attr_icon = "mdi:window-closed"
 

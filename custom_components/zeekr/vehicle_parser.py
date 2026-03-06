@@ -500,10 +500,8 @@ class VehicleDataParser:
         (может быть инверсная логика у Zeekr)
         """
         level_map = {
-            '0': 'Полный ✅ 💧',
-            '1': 'Хороший 🟢 💧',
-            '2': 'Нижний 🟡 💧',
-            '3': 'Критичный 🔴 💧',
+            '0': 'Полный ✅',
+            '1': 'Низкий 🔴',
         }
         return level_map.get(str(level_code), f'Уровень {level_code}')
 
