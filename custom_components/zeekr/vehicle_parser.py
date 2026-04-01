@@ -271,26 +271,6 @@ class VehicleDataParser:
         }
         return status_map.get(str(status_code), 'Неизвестно')
 
-    def get_seatbelt_status(self) -> Dict[str, Any]:
-        """Получает статус ремней безопасности (КРИТИЧНО!)"""
-        safety = self.data.get('additionalVehicleStatus', {}).get('drivingSafetyStatus', {})
-
-        driver_belted = bool(safety.get('seatBeltStatusDriver', False))
-        passenger_belted = bool(safety.get('seatBeltStatusPassenger', False))
-        driver_rear_belted = bool(safety.get('seatBeltStatusDriverRear', False))
-        passenger_rear_belted = bool(safety.get('seatBeltStatusPassengerRear', False))
-
-        all_belted = driver_belted and passenger_belted and driver_rear_belted and passenger_rear_belted
-
-        return {
-            'driver_belted': '✅ Пристегнут' if driver_belted else '❌ НЕ пристегнут',
-            'passenger_belted': '✅ Пристегнут' if passenger_belted else '❌ НЕ пристегнут',
-            'driver_rear_belted': '✅ Пристегнут' if driver_rear_belted else '❌ НЕ пристегнут',
-            'passenger_rear_belted': '✅ Пристегнут' if passenger_rear_belted else '❌ НЕ пристегнут',
-            'all_belted': all_belted,
-            'safety_alert': '🚨 ОПАСНО: Не пристегнуты!' if not all_belted else '✅ Все в безопасности',
-        }
-
     # ==================== ОКНА ====================
 
     def get_windows_info(self) -> Dict[str, Any]:

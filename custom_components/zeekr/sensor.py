@@ -1270,93 +1270,6 @@ class ZeekrGearStatusSensor(ZeekrBaseSensor):
             return movement['gear_auto']
         return None
 
-
-# ==================== РЕМНИ БЕЗОПАСНОСТИ ====================
-
-class ZeekrSeatbeltDriverSensor(ZeekrBaseSensor):
-    """Статус ремня безопасности водителя"""
-
-    _attr_name = "Ремень водителя"
-    _attr_icon = "mdi:seatbelt"
-
-    def _get_sensor_type(self) -> str:
-        return "seatbelt_driver"
-
-    @property
-    def native_value(self) -> str:
-        """Вернуть статус ремня водителя"""
-        parser = self._get_parser()
-        if parser:
-            belts = parser.get_seatbelt_status()
-            return belts['driver_belted']
-        return None
-
-    @property
-    def extra_state_attributes(self) -> Dict[str, Any]:
-        """Дополнительная информация"""
-        parser = self._get_parser()
-        if parser:
-            belts = parser.get_seatbelt_status()
-            return {
-                'Пристегнут': belts['driver_belted'].startswith('✅'),
-                'Предупреждение': belts['safety_alert'],
-            }
-        return {}
-
-
-class ZeekrSeatbeltPassengerSensor(ZeekrBaseSensor):
-    """Статус ремня безопасности пассажира"""
-
-    _attr_name = "Ремень пассажира"
-    _attr_icon = "mdi:seatbelt"
-
-    def _get_sensor_type(self) -> str:
-        return "seatbelt_passenger"
-
-    @property
-    def native_value(self) -> str:
-        """Вернуть статус ремня пассажира"""
-        parser = self._get_parser()
-        if parser:
-            belts = parser.get_seatbelt_status()
-            return belts['passenger_belted']
-        return None
-
-
-class ZeekrSeatbeltStatusSensor(ZeekrBaseSensor):
-    """Общий статус всех ремней безопасности"""
-
-    _attr_name = "Статус ремней"
-    _attr_icon = "mdi:seatbelt"
-
-    def _get_sensor_type(self) -> str:
-        return "seatbelt_status"
-
-    @property
-    def native_value(self) -> str:
-        """Вернуть общий статус"""
-        parser = self._get_parser()
-        if parser:
-            belts = parser.get_seatbelt_status()
-            return belts['safety_alert']
-        return None
-
-    @property
-    def extra_state_attributes(self) -> Dict[str, Any]:
-        """Дополнительная информация"""
-        parser = self._get_parser()
-        if parser:
-            belts = parser.get_seatbelt_status()
-            return {
-                'Водитель': belts['driver_belted'],
-                'Пассажир': belts['passenger_belted'],
-                'Задний_слева': belts['driver_rear_belted'],
-                'Задний_справа': belts['passenger_rear_belted'],
-                'Все_пристегнуты': belts['all_belted'],
-            }
-        return {}
-
-
 # ==================== GPS И НАВИГАЦИЯ ====================
 
 class ZeekrGpsStatusSensor(ZeekrBaseSensor):
@@ -1527,11 +1440,6 @@ async def async_setup_entry(
             ZeekrBrakeStatusSensor(coordinator, vin),
             ZeekrEnergyRecoverySensor(coordinator, vin),
             ZeekrGearStatusSensor(coordinator, vin),
-
-            # 🔒 РЕМНИ БЕЗОПАСНОСТИ
-            ZeekrSeatbeltDriverSensor(coordinator, vin),
-            ZeekrSeatbeltPassengerSensor(coordinator, vin),
-            ZeekrSeatbeltStatusSensor(coordinator, vin),
 
             # 📡 GPS
             ZeekrGpsStatusSensor(coordinator, vin),

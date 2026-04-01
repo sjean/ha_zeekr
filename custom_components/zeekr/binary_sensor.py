@@ -52,10 +52,6 @@ async def async_setup_entry(
             ZeekrRearShadeOpenSensor(coordinator, vin),
             ZeekrRoofTransparentSensor(coordinator, vin),
 
-            # 🔒 РЕМНИ БЕЗОПАСНОСТИ
-            ZeekrSeatbeltDriverBinarySensor(coordinator, vin),
-            ZeekrSeatbeltPassengerBinarySensor(coordinator, vin),
-
             # 📡 GPS
             ZeekrGpsActiveSensor(coordinator, vin),
 
@@ -388,49 +384,6 @@ class ZeekrRoofTransparentSensor(ZeekrBaseBinarySensor):
             roof = parser.get_panoramic_roof_status()
             return roof['is_transparent']
         return False
-
-
-# ========== РЕМНИ БЕЗОПАСНОСТИ ====================
-
-class ZeekrSeatbeltDriverBinarySensor(ZeekrBaseBinarySensor):
-    """Водитель пристегнут?"""
-
-    _attr_name = "Seatbelt Driver"
-    _attr_icon = "mdi:seatbelt"
-    _attr_device_class = BinarySensorDeviceClass.SAFETY
-
-    def _get_sensor_type(self) -> str:
-        return "seatbelt_driver_binary"
-
-    @property
-    def is_on(self) -> bool:
-        """Return True if driver is belted"""
-        parser = self._get_parser()
-        if parser:
-            belts = parser.get_seatbelt_status()
-            return belts['driver_belted'].startswith('✅')
-        return False
-
-
-class ZeekrSeatbeltPassengerBinarySensor(ZeekrBaseBinarySensor):
-    """Пассажир пристегнут?"""
-
-    _attr_name = "Seatbelt Passenger"
-    _attr_icon = "mdi:seatbelt"
-    _attr_device_class = BinarySensorDeviceClass.SAFETY
-
-    def _get_sensor_type(self) -> str:
-        return "seatbelt_passenger_binary"
-
-    @property
-    def is_on(self) -> bool:
-        """Return True if passenger is belted"""
-        parser = self._get_parser()
-        if parser:
-            belts = parser.get_seatbelt_status()
-            return belts['passenger_belted'].startswith('✅')
-        return False
-
 
 # ========== GPS И НАВИГАЦИЯ ====================
 
