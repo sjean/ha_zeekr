@@ -1,6 +1,6 @@
 # zeekr_api.py
 """
-Работа с Zeekr API для получения данных об автомобилях
+Work with the Zeekr API to retrieve vehicle data
 """
 import requests
 import json
@@ -19,15 +19,15 @@ from .zeekr_storage import token_storage
 
 
 class ZeekrAPI:
-    """Класс для работы с Zeekr API (SECURE endpoint)"""
+    """Client for the Zeekr SECURE API."""
 
     def __init__(self, access_token: str, user_id: str, client_id: str, device_id: str):
         """
-        Инициализация API клиента
+        Initialize the API client.
 
         Args:
-            access_token: Access токен для авторизации
-            user_id: ID пользователя
+            access_token: Access token for authentication
+            user_id: User ID
             client_id: Client ID
             device_id: Device ID
         """
@@ -41,20 +41,20 @@ class ZeekrAPI:
     def _calculate_signature(self, method: str, path: str, timestamp: str,
                              nonce: str, body: str = '', query_string: str = '') -> str:
         """
-        Рассчитывает подпись для SECURE API запроса
+        Calculate the signature for a SECURE API request.
 
         Args:
-            method: HTTP метод (GET, POST, PUT и т.д.)
-            path: Путь к endpoint (например /remote-control/vehicle/status/VIN)
-            timestamp: Текущее время в миллисекундах
-            nonce: Уникальный UUID
-            body: Тело запроса (JSON строка)
-            query_string: Query параметры (отсортированные)
+            method: HTTP method (GET, POST, PUT, etc.)
+            path: Endpoint path (for example /remote-control/vehicle/status/VIN)
+            timestamp: Current time in milliseconds
+            nonce: Unique UUID
+            body: Request body (JSON string)
+            query_string: Sorted query parameters
 
         Returns:
-            Base64 кодированная подпись HMAC-SHA1
+            Base64-encoded HMAC-SHA1 signature
         """
-        # Вычисляем MD5 хеш тела запроса (Base64 кодированный)
+        # Calculate the Base64-encoded MD5 body hash
         if body:
             body_md5 = base64.b64encode(
                 hashlib.md5(body.encode()).digest()
@@ -64,8 +64,8 @@ class ZeekrAPI:
                 hashlib.md5(b'').digest()
             ).decode()
 
-        # Строим строку для подписи в определенном порядке
-        # Это очень важный порядок!
+        # Build the string to sign in the required order
+        # This order is important!
         string_to_sign = '\n'.join([
             'application/json;responseformat=3',
             f'x-api-signature-nonce:{nonce}',
@@ -80,7 +80,7 @@ class ZeekrAPI:
 
         print(f"[DEBUG] String to sign:\n{string_to_sign}\n")
 
-        # Подписываем HMAC-SHA1
+        # Sign using HMAC-SHA1
         signature = base64.b64encode(
             hmac.new(
                 HMAC_SECRET.encode(),
@@ -94,18 +94,18 @@ class ZeekrAPI:
     def _get_headers(self, method: str, path: str, timestamp: str,
                      nonce: str, body: str = '', query_string: str = '') -> Dict[str, str]:
         """
-        Подготавливает заголовки для SECURE API запроса
+        Build headers for a SECURE API request.
 
         Args:
-            method: HTTP метод
-            path: Путь к endpoint
-            timestamp: Текущее время в миллисекундах
-            nonce: Уникальный UUID
-            body: Тело запроса
-            query_string: Query параметры
+            method: HTTP method
+            path: Endpoint path
+            timestamp: Current time in milliseconds
+            nonce: Unique UUID
+            body: Request body
+            query_string: Query parameters
 
         Returns:
-            Словарь с заголовками
+            Dictionary of headers
         """
         signature = self._calculate_signature(
             method, path, timestamp, nonce, body, query_string
@@ -137,12 +137,12 @@ class ZeekrAPI:
 
     def get_vehicles(self) -> Tuple[bool, Optional[List[str]]]:
         """
-        Получает список VIN номеров автомобилей пользователя
+        Fetch the list of vehicle VINs for the user.
 
         Returns:
-            Кортеж (успешность, список VIN или None)
+            Tuple of (success, VIN list or None)
         """
-        print("\n🚗 Получаю список автомобилей...")
+        print("\n🚗 Fetching the vehicle list...")
 
         timestamp = str(int(datetime.now().timestamp() * 1000))
         nonce = str(uuid.uuid4()).upper()
@@ -153,7 +153,7 @@ class ZeekrAPI:
             'needSharedCar': '1'
         }
 
-        # Сортируем параметры и создаем query string
+        # Sort parameters and build the query string
         query_string = urlencode(sorted(params.items()))
 
         url = f"{self.base_url}{path}?{query_string}"
@@ -169,28 +169,28 @@ class ZeekrAPI:
 
             if data.get('code') == '1000':
                 vehicles = [v['vin'] for v in data.get('data', {}).get('list', [])]
-                print(f"✅ Найдено {len(vehicles)} автомобилей: {vehicles}")
+                print(f"✅ Found {len(vehicles)} vehicles: {vehicles}")
                 return True, vehicles
             else:
-                error_msg = data.get('message', 'Неизвестная ошибка')
-                print(f"❌ Ошибка получения автомобилей: {error_msg}")
+                error_msg = data.get('message', 'Unknown error')
+                print(f"❌ Failed to fetch vehicles: {error_msg}")
                 return False, None
 
         except requests.exceptions.RequestException as e:
-            print(f"❌ Ошибка при запросе: {e}")
+            print(f"❌ Request error: {e}")
             return False, None
 
     def get_vehicle_status(self, vin: str) -> Tuple[bool, Optional[Dict]]:
         """
-        Получает статус конкретного автомобиля
+        Fetch the status of a specific vehicle.
 
         Args:
-            vin: VIN номер автомобиля
+            vin: Vehicle VIN
 
         Returns:
-            Кортеж (успешность, словарь со статусом или None)
+            Tuple of (success, status dictionary or None)
         """
-        print(f"\n📊 Получаю статус автомобиля {vin}...")
+        print(f"\n📊 Fetching status for vehicle {vin}...")
 
         timestamp = str(int(datetime.now().timestamp() * 1000))
         nonce = str(uuid.uuid4()).upper()
@@ -202,7 +202,7 @@ class ZeekrAPI:
             'userId': self.user_id,
         }
 
-        # Сортируем параметры и создаем query string
+        # Sort parameters and build the query string
         query_string = urlencode(sorted(params.items()))
 
         url = f"{self.base_url}{path}?{query_string}"
@@ -218,34 +218,34 @@ class ZeekrAPI:
 
             if data.get('code') == '1000':
                 vehicle_status = data.get('data', {}).get('vehicleStatus', {})
-                print(f"✅ Статус получен для {vin}")
+                print(f"✅ Status fetched for {vin}")
                 return True, vehicle_status
             else:
-                error_msg = data.get('message', 'Неизвестная ошибка')
-                print(f"❌ Ошибка получения статуса: {error_msg} (код: {data.get('code')})")
+                error_msg = data.get('message', 'Unknown error')
+                print(f"❌ Failed to fetch status: {error_msg} (code: {data.get('code')})")
                 return False, None
 
         except requests.exceptions.RequestException as e:
-            print(f"❌ Ошибка при запросе: {e}")
+            print(f"❌ Request error: {e}")
             return False, None
 
     def get_all_vehicles_status(self) -> Tuple[bool, Optional[Dict[str, Dict]]]:
         """
-        Получает статус всех автомобилей пользователя
+        Fetch status for all user vehicles.
 
         Returns:
-            Кортеж (успешность, словарь {VIN: статус} или None)
+            Tuple of (success, {VIN: status} dictionary or None)
         """
         print("\n" + "=" * 50)
-        print("🔄 ПОЛУЧЕНИЕ СТАТУСА ВСЕХ АВТОМОБИЛЕЙ")
+        print("🔄 FETCH STATUS FOR ALL VEHICLES")
         print("=" * 50)
 
-        # Сначала получаем список VIN
+        # First fetch the VIN list
         success, vehicles = self.get_vehicles()
         if not success or not vehicles:
             return False, None
 
-        # Затем получаем статус каждого
+        # Then fetch each vehicle status
         all_status = {}
         for vin in vehicles:
             success, status = self.get_vehicle_status(vin)

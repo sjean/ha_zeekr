@@ -31,10 +31,10 @@ async def async_setup_entry(
 
     entities = []
 
-    # Для каждого автомобиля создаем binary sensors
+    # Create binary sensors for each vehicle
     for vin in coordinator.data.keys():
         entities.extend([
-            # ========== СТАНДАРТНЫЕ ДАТЧИКИ ==========
+            # ========== STANDARD SENSORS ==========
             ZeekrEngineStatusSensor(coordinator, vin),
             ZeekrDriverDoorSensor(coordinator, vin),
             ZeekrPassengerDoorSensor(coordinator, vin),
@@ -47,7 +47,7 @@ async def async_setup_entry(
             ZeekrDriverRearWindowSensor(coordinator, vin),
             ZeekrPassengerRearWindowSensor(coordinator, vin),
 
-            # ========== ПАНОРАМНАЯ КРЫША (ИСПРАВЛЕННАЯ) ====================
+            # ========== PANORAMIC ROOF (FIXED) ====================
             ZeekrFrontShadeOpenSensor(coordinator, vin),
             ZeekrRearShadeOpenSensor(coordinator, vin),
             ZeekrRoofTransparentSensor(coordinator, vin),
@@ -55,7 +55,7 @@ async def async_setup_entry(
             # 📡 GPS
             ZeekrGpsActiveSensor(coordinator, vin),
 
-            # 🚗 ТОРМОЖЕНИЕ
+            # 🚗 BRAKING
             ZeekrBrakingSensor(coordinator, vin),
             ZeekrEnergyRecoveryActiveSensor(coordinator, vin),
         ])
@@ -64,7 +64,7 @@ async def async_setup_entry(
     _LOGGER.info(f"✅ Added {len(entities)} binary sensors total")
 
 
-# ==================== БАЗОВЫЙ КЛАСС ====================
+# ==================== BASE CLASS ====================
 
 class ZeekrBaseBinarySensor(CoordinatorEntity, BinarySensorEntity):
     """Base class for Zeekr binary sensors"""
@@ -75,10 +75,10 @@ class ZeekrBaseBinarySensor(CoordinatorEntity, BinarySensorEntity):
         self.vin = vin
         self._attr_has_entity_name = True
 
-        # Уникальный ID
+        # Unique ID
         self._attr_unique_id = f"{DOMAIN}_{vin}_{self._get_sensor_type()}"
 
-        # Информация об устройстве
+        # Device information
         self._attr_device_info = {
             "identifiers": {(DOMAIN, vin)},
             "name": f"Zeekr {vin}",
@@ -102,7 +102,7 @@ class ZeekrBaseBinarySensor(CoordinatorEntity, BinarySensorEntity):
         self.async_write_ha_state()
 
 
-# ==================== СТАНДАРТНЫЕ ДАТЧИКИ ====================
+# ==================== STANDARD SENSORS ====================
 
 class ZeekrEngineStatusSensor(ZeekrBaseBinarySensor):
     """Engine status binary sensor"""
@@ -227,7 +227,7 @@ class ZeekrTrunkSensor(ZeekrBaseBinarySensor):
 class ZeekrEngineHoodSensor(ZeekrBaseBinarySensor):
     """Engine hood binary sensor"""
 
-    _attr_name = "Капот"
+    _attr_name = "Hood"
     _attr_device_class = BinarySensorDeviceClass.DOOR
     _attr_icon = "mdi:car-door"
 
@@ -247,7 +247,7 @@ class ZeekrEngineHoodSensor(ZeekrBaseBinarySensor):
 class ZeekrDriverWindowSensor(ZeekrBaseBinarySensor):
     """Driver window binary sensor"""
 
-    _attr_name = "Окно ПЛ"
+    _attr_name = "Front Left Window"
     _attr_device_class = BinarySensorDeviceClass.WINDOW
     _attr_icon = "mdi:window-closed"
 
@@ -260,14 +260,14 @@ class ZeekrDriverWindowSensor(ZeekrBaseBinarySensor):
         parser = self._get_parser()
         if parser:
             windows = parser.get_windows_info()
-            return windows['driver_window'] == 'Открыто'
+            return windows['driver_window'] == 'Open'
         return False
 
 
 class ZeekrPassengerWindowSensor(ZeekrBaseBinarySensor):
     """Passenger window binary sensor"""
 
-    _attr_name = "Окно ПП"
+    _attr_name = "Front Right Window"
     _attr_device_class = BinarySensorDeviceClass.WINDOW
     _attr_icon = "mdi:window-closed"
 
@@ -280,14 +280,14 @@ class ZeekrPassengerWindowSensor(ZeekrBaseBinarySensor):
         parser = self._get_parser()
         if parser:
             windows = parser.get_windows_info()
-            return windows['passenger_window'] == 'Открыто'
+            return windows['passenger_window'] == 'Open'
         return False
 
 
 class ZeekrDriverRearWindowSensor(ZeekrBaseBinarySensor):
     """Driver rear window binary sensor"""
 
-    _attr_name = "Окно ЗЛ"
+    _attr_name = "Rear Left Window"
     _attr_device_class = BinarySensorDeviceClass.WINDOW
     _attr_icon = "mdi:window-closed"
 
@@ -300,14 +300,14 @@ class ZeekrDriverRearWindowSensor(ZeekrBaseBinarySensor):
         parser = self._get_parser()
         if parser:
             windows = parser.get_windows_info()
-            return windows['driver_rear_window'] == 'Открыто'
+            return windows['driver_rear_window'] == 'Open'
         return False
 
 
 class ZeekrPassengerRearWindowSensor(ZeekrBaseBinarySensor):
     """Passenger rear window binary sensor"""
 
-    _attr_name = "Окно ЗП"
+    _attr_name = "Rear Right Window"
     _attr_device_class = BinarySensorDeviceClass.WINDOW
     _attr_icon = "mdi:window-closed"
 
@@ -320,14 +320,14 @@ class ZeekrPassengerRearWindowSensor(ZeekrBaseBinarySensor):
         parser = self._get_parser()
         if parser:
             windows = parser.get_windows_info()
-            return windows['passenger_rear_window'] == 'Открыто'
+            return windows['passenger_rear_window'] == 'Open'
         return False
 
 
-# ==================== ПАНОРАМНАЯ КРЫША (ИСПРАВЛЕННОЕ) ====================
+# ==================== PANORAMIC ROOF (FIXED) ====================
 
 class ZeekrFrontShadeOpenSensor(ZeekrBaseBinarySensor):
-    """Передняя затемняющая шторка открыта?"""
+    """Is the front shade open?"""
 
     _attr_name = "Front Shade Open"
     _attr_icon = "mdi:window-shutter"
@@ -347,7 +347,7 @@ class ZeekrFrontShadeOpenSensor(ZeekrBaseBinarySensor):
 
 
 class ZeekrRearShadeOpenSensor(ZeekrBaseBinarySensor):
-    """Задняя затемняющая шторка открыта?"""
+    """Is the rear shade open?"""
 
     _attr_name = "Rear Shade Open"
     _attr_icon = "mdi:window-shutter"
@@ -367,7 +367,7 @@ class ZeekrRearShadeOpenSensor(ZeekrBaseBinarySensor):
 
 
 class ZeekrRoofTransparentSensor(ZeekrBaseBinarySensor):
-    """Крыша пропускает свет? (шторка открыта более чем на 50%)"""
+    """Does the roof let light through? (shade more than 50% open)"""
 
     _attr_name = "Roof Transparent"
     _attr_icon = "mdi:window"
@@ -385,10 +385,10 @@ class ZeekrRoofTransparentSensor(ZeekrBaseBinarySensor):
             return roof['is_transparent']
         return False
 
-# ========== GPS И НАВИГАЦИЯ ====================
+# ========== GPS AND NAVIGATION ====================
 
 class ZeekrGpsActiveSensor(ZeekrBaseBinarySensor):
-    """GPS активен?"""
+    """Is GPS active?"""
 
     _attr_name = "GPS Active"
     _attr_icon = "mdi:satellite-variant"
@@ -406,10 +406,10 @@ class ZeekrGpsActiveSensor(ZeekrBaseBinarySensor):
         return False
 
 
-# ========== ТОРМОЖЕНИЕ И ВОССТАНОВЛЕНИЕ ====================
+# ========== BRAKING AND RECOVERY ====================
 
 class ZeekrBrakingSensor(ZeekrBaseBinarySensor):
-    """Машина тормозит? (восстановление энергии)"""
+    """Is the vehicle braking? (energy recovery)"""
 
     _attr_name = "Braking"
     _attr_icon = "mdi:brake-fluid"
@@ -428,7 +428,7 @@ class ZeekrBrakingSensor(ZeekrBaseBinarySensor):
 
 
 class ZeekrEnergyRecoveryActiveSensor(ZeekrBaseBinarySensor):
-    """Рекуперативное торможение активно?"""
+    """Is regenerative braking active?"""
 
     _attr_name = "Energy Recovery Active"
     _attr_icon = "mdi:lightning-bolt"

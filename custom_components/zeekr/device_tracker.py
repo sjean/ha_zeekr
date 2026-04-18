@@ -15,7 +15,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import ZeekrDataCoordinator
-from vehicle_parser import VehicleDataParser
+from .vehicle_parser import VehicleDataParser
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,8 +31,8 @@ async def async_setup_entry(
 
     entities = []
 
-    # Для каждого автомобиля создаем device tracker
-    for vin in coordinator.data.keys():  # ← ИЗМЕНЕНО
+    # Create a device tracker for each vehicle
+    for vin in coordinator.data.keys():  # updated
         entities.append(ZeekrDeviceTracker(coordinator, vin))
 
     async_add_entities(entities)
@@ -51,10 +51,10 @@ class ZeekrDeviceTracker(CoordinatorEntity, TrackerEntity):
         super().__init__(coordinator)
         self.vin = vin
 
-        # Уникальный ID
+        # Unique ID
         self._attr_unique_id = f"{DOMAIN}_{vin}_location"
 
-        # Информация об устройстве
+        # Device information
         self._attr_device_info = {
             "identifiers": {(DOMAIN, vin)},
             "name": f"Zeekr {vin}",
@@ -66,7 +66,7 @@ class ZeekrDeviceTracker(CoordinatorEntity, TrackerEntity):
         """Get parser for current vehicle data"""
         if self.vin not in self.coordinator.data:
             return None
-        from vehicle_parser import VehicleDataParser
+        from .vehicle_parser import VehicleDataParser
         return VehicleDataParser(self.coordinator.data[self.vin])
 
     @property
