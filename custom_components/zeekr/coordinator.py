@@ -1,5 +1,5 @@
 # custom_components/zeekr/coordinator.py
-"""Data Coordinator для Zeekr интеграции"""
+"""Data coordinator for the Zeekr integration."""
 
 import logging
 import sys
@@ -11,13 +11,13 @@ from typing import Dict, Any
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-# Добавляем путь для импорта
+# Ensure local package imports work
 current_dir = os.path.dirname(__file__)
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
-# Импортируем после добавления пути
-from const import DOMAIN, DEFAULT_SCAN_INTERVAL
+# Import after adjusting the path
+from .const import DOMAIN, DEFAULT_SCAN_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,14 +36,14 @@ class ZeekrDataCoordinator(DataUpdateCoordinator):
 
         self.api_client = api_client
         self.responses_dir = responses_dir
-        self.last_response = None  # Сохраняем последний ответ
+        self.last_response = None  # Keep the latest response
 
     async def _async_update_data(self) -> Dict[str, Any]:
         """Fetch data from Zeekr API."""
         try:
             _LOGGER.debug("Fetching Zeekr vehicle data")
 
-            # Получаем список автомобилей
+            # Fetch the list of vehicles
             success, vehicles = await self.hass.async_add_executor_job(
                 self.api_client.get_vehicles
             )
@@ -51,7 +51,7 @@ class ZeekrDataCoordinator(DataUpdateCoordinator):
             if not success:
                 raise UpdateFailed("Failed to fetch vehicle list")
 
-            # Для каждого автомобиля получаем статус
+            # Fetch the status for each vehicle
             vehicles_data = {}
             for vin in vehicles:
                 success, status = await self.hass.async_add_executor_job(
@@ -61,7 +61,7 @@ class ZeekrDataCoordinator(DataUpdateCoordinator):
                 if success and status:
                     vehicles_data[vin] = status
 
-                    # 🔥 АСИНХРОННО сохраняем ответ
+                    # Save the response asynchronously
                     await self._async_save_response_to_file(vin, status)
                 else:
                     _LOGGER.warning(f"Failed to fetch status for {vin}")
@@ -79,19 +79,19 @@ class ZeekrDataCoordinator(DataUpdateCoordinator):
 
     async def _async_save_response_to_file(self, vin: str, data: Dict) -> None:
         """
-        ⭐ АСИНХРОННО сохраняет ответ сервера в JSON файл
+        Asynchronously save the server response to a JSON file.
 
-        Использует executor чтобы не блокировать event loop!
+        Uses the executor so the event loop is not blocked.
 
         Args:
-            vin: VIN номер автомобиля
-            data: Данные ответа от сервера
+            vin: Vehicle VIN
+            data: Response payload from the server
         """
         if not self.responses_dir:
             return
 
         try:
-            # ⭐ АСИНХРОННАЯ операция с помощью executor
+            # Run the file write via the executor
             await self.hass.async_add_executor_job(
                 self._save_response_sync,
                 vin,
@@ -106,19 +106,19 @@ class ZeekrDataCoordinator(DataUpdateCoordinator):
 
     def _save_response_sync(self, vin: str, data: Dict) -> None:
         """
-        Синхронная функция для сохранения файла
-        (выполняется в отдельном потоке через executor)
+        Synchronous helper for writing the file
+        (runs in a separate thread via the executor)
 
         Args:
-            vin: VIN номер автомобиля
-            data: Данные ответа от сервера
+            vin: Vehicle VIN
+            data: Response payload from the server
         """
         try:
-            # Имя файла с датой и временем
+            # Build a timestamped filename
             filename = f"zeekr_{vin}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
             filepath = os.path.join(self.responses_dir, filename)
 
-            # Упаковываем ответ с метаданными
+            # Wrap the response with metadata
             response_with_metadata = {
                 "_metadata": {
                     "saved_at": datetime.now().isoformat(),
@@ -128,7 +128,7 @@ class ZeekrDataCoordinator(DataUpdateCoordinator):
                 "data": data
             }
 
-            # Сохраняем в файл
+            # Save to file
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(response_with_metadata, f, ensure_ascii=False, indent=2)
 

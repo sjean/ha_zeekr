@@ -1,29 +1,29 @@
 # custom_components/zeekr/services.yaml
 
 save_response:
-  name: "Сохранить ответ сервера"
-  description: "Сохраняет последний ответ от API сервера в JSON файл"
+  name: "Save Server Response"
+  description: "Save the latest API server response to a JSON file"
   fields:
     filename:
-      name: "Имя файла"
-      description: "Имя файла для сохранения (по умолчанию: response_YYYYMMDD_HHMMSS.json)"
+      name: "Filename"
+      description: "Filename to save as (default: response_YYYYMMDD_HHMMSS.json)"
       example: "manual_response.json"
       selector:
         text:
     description:
-      name: "Описание"
-      description: "Описание сохраняемого ответа"
-      example: "Ответ при зарядке"
+      name: "Description"
+      description: "Description of the saved response"
+      example: "Response while charging"
       selector:
         text:
 
 refresh_and_save:
-  name: "Обновить и сохранить"
-  description: "Обновляет данные об автомобиле и сохраняет ответ сервера"
+  name: "Refresh And Save"
+  description: "Refresh vehicle data and save the server response"
   fields:
     description:
-      name: "Описание"
-      description: "Описание для сохраняемого ответа"
-      example: "Обновление при парковке"
+      name: "Description"
+      description: "Description for the saved response"
+      example: "Refresh while parked"
       selector:
         text:

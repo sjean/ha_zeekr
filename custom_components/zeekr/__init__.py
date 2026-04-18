@@ -32,10 +32,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.info(f"🔧 Setting up Zeekr integration for entry {entry.entry_id}")
 
     try:
-        # Загружаем токены из entry
+        # Load tokens from the config entry
         tokens = dict(entry.data)
 
-        # Резервно проверяем файл (для старых установок)
+        # Fallback to the file-based backup for older installations
         if not tokens or not tokens.get('accessToken'):
             _LOGGER.warning("⚠️ No tokens in entry.data, trying file storage...")
             tokens = token_storage.load_tokens()
@@ -48,7 +48,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             _LOGGER.error("❌ No tokens found")
             return False
 
-        # Проверяем необходимые поля
+        # Check required fields
         required_fields = ['accessToken', 'userId', 'clientId', 'device_id']
         missing_fields = [f for f in required_fields if f not in tokens or not tokens[f]]
 
@@ -56,7 +56,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             _LOGGER.error(f"❌ Missing required token fields: {missing_fields}")
             return False
 
-        # Создаем папку для ответов
+        # Create the response directory
         try:
             responses_dir = os.path.join(hass.config.path('www'), 'zeekr_responses')
             os.makedirs(responses_dir, exist_ok=True)
@@ -65,7 +65,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             _LOGGER.error(f"❌ Failed to create responses directory: {e}")
             responses_dir = None
 
-        # Создаем API клиент
+        # Create the API client
         api_client = ZeekrAPI(
             access_token=tokens.get('accessToken'),
             user_id=tokens.get('userId'),
@@ -73,24 +73,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             device_id=tokens.get('device_id')
         )
 
-        # Создаем coordinator
+        # Create the coordinator
         coordinator = ZeekrDataCoordinator(hass, api_client, responses_dir)
 
-        # Получаем первые данные
+        # Fetch the first batch of data
         try:
             await coordinator.async_config_entry_first_refresh()
             _LOGGER.info("✅ First data refresh successful")
         except Exception as e:
             _LOGGER.warning(f"⚠️ First refresh failed: {e}")
 
-        # Сохраняем coordinator
+        # Store the coordinator
         hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
-        # ==================== УСТАНОВКА ПЛАТФОРМ ====================
+        # ==================== PLATFORM SETUP ====================
         await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
         _LOGGER.info(f"✅ Platforms configured: {PLATFORMS}")
 
-        # ==================== РЕГИСТРАЦИЯ СЕРВИСОВ ====================
+        # ==================== SERVICE REGISTRATION ====================
         _register_services(hass, responses_dir)
 
         _LOGGER.info("🎉 Zeekr integration setup COMPLETE!")
@@ -102,10 +102,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 def _register_services(hass: HomeAssistant, responses_dir: str) -> None:
-    """Регистрирует сервисы интеграции"""
+    """Register integration services."""
 
     async def handle_save_response(call: ServiceCall) -> None:
-        """Сохраняет ответ сервера"""
+        """Save the server response."""
         _LOGGER.info("📥 Manual save response called")
 
         try:
@@ -142,7 +142,7 @@ def _register_services(hass: HomeAssistant, responses_dir: str) -> None:
             _LOGGER.error(f"❌ Error saving response: {e}", exc_info=True)
 
     async def handle_refresh_and_save(call: ServiceCall) -> None:
-        """Обновляет данные и сохраняет ответ"""
+        """Refresh data and save the response."""
         _LOGGER.info("🔄 Refresh and save called")
 
         try:
@@ -174,7 +174,7 @@ def _register_services(hass: HomeAssistant, responses_dir: str) -> None:
         except Exception as e:
             _LOGGER.error(f"❌ Error: {e}", exc_info=True)
 
-    # Регистрируем сервисы
+    # Register services
     hass.services.async_register(DOMAIN, 'save_response', handle_save_response)
     hass.services.async_register(DOMAIN, 'refresh_and_save', handle_refresh_and_save)
 

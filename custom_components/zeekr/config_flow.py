@@ -42,7 +42,7 @@ class ZeekrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
 
             try:
-                # ✅ ИСПРАВЛЕНО - правильный импорт
+                # Fixed: correct import
                 from .auth import ZeekrAuth
 
                 auth = ZeekrAuth()
@@ -151,7 +151,7 @@ class ZeekrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                 _LOGGER.info("✅ Authentication successful!")
 
-                # ✅ СОЗДАЕМ ENTRY С ТОКЕНАМИ
+                # Create the config entry with tokens
                 await self.async_set_unique_id("zeekr_main")
                 self._abort_if_unique_id_configured()
 
@@ -159,7 +159,7 @@ class ZeekrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     title=f"Zeekr {mobile}",
                     data={
                         "mobile": mobile,
-                        # ✅ СОХРАНЯЕМ ТОКЕНЫ В ENTRY!
+                        # Save tokens in the config entry
                         "accessToken": secure_tokens.get("accessToken"),
                         "refreshToken": secure_tokens.get("refreshToken"),
                         "userId": secure_tokens.get("userId"),

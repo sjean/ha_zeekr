@@ -1,9 +1,9 @@
 # custom_components/zeekr/zeekr_storage.py
 """
-Управление сохранением и загрузкой токенов
+Manage token persistence and loading.
 
-ОСНОВНОЕ ХРАНИЛИЩЕ: entry.data в Home Assistant
-РЕЗЕРВНОЕ ХРАНИЛИЩЕ: tokens.json файл
+PRIMARY STORAGE: entry.data in Home Assistant
+BACKUP STORAGE: tokens.json file
 """
 import json
 import os
@@ -13,32 +13,32 @@ _LOGGER = None
 
 
 def set_logger(logger):
-    """Устанавливает логгер"""
+    """Set the logger."""
     global _LOGGER
     _LOGGER = logger
 
 
 class TokenStorage:
-    """Класс для работы с хранилищем токенов"""
+    """Helper for working with token storage."""
 
     def __init__(self):
-        """Инициализация хранилища"""
-        # Получаем папку где находится этот файл
+        """Initialize storage."""
+        # Resolve the directory where this file lives
         self.storage_dir = os.path.dirname(os.path.abspath(__file__))
         self.filename = os.path.join(self.storage_dir, 'tokens.json')
 
     def save_tokens(self, tokens: Dict[str, str]) -> None:
         """
-        Сохраняет токены в JSON файл (РЕЗЕРВНОЕ ХРАНИЛИЩЕ)
+        Save tokens to the JSON backup file.
 
-        Основное хранилище: entry.data в Home Assistant
-        Это РЕЗЕРВНАЯ копия для миграции старых установок
+        Primary storage: entry.data in Home Assistant
+        This is a backup copy for migrating older installations
 
         Args:
-            tokens: Словарь с ключами:
-                   - accessToken: Access токен для SECURE API
-                   - refreshToken: Refresh токен
-                   - userId: ID пользователя
+            tokens: Dictionary with keys:
+                   - accessToken: Access token for the SECURE API
+                   - refreshToken: Refresh token
+                   - userId: User ID
                    - clientId: Client ID
                    - device_id: Device ID
         """
@@ -57,12 +57,12 @@ class TokenStorage:
 
     def load_tokens(self) -> Optional[Dict[str, str]]:
         """
-        Загружает токены из JSON файла (РЕЗЕРВНОЕ ХРАНИЛИЩЕ)
+        Load tokens from the JSON backup file.
 
-        Используется для миграции со старых версий
+        Used to migrate older versions
 
         Returns:
-            Словарь с токенами или None если файла нет
+            Token dictionary or None if the file does not exist
         """
         if not os.path.exists(self.filename):
             if _LOGGER:
@@ -83,12 +83,12 @@ class TokenStorage:
             return None
 
     def clear_tokens(self) -> None:
-        """Удаляет файл с токенами"""
+        """Delete the token file."""
         if os.path.exists(self.filename):
             os.remove(self.filename)
             if _LOGGER:
                 _LOGGER.info(f"✅ [TokenStorage] Tokens file deleted")
 
 
-# Создаем глобальный экземпляр
+# Create the global instance
 token_storage = TokenStorage()

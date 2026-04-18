@@ -30,7 +30,7 @@ from .vehicle_parser import VehicleDataParser
 _LOGGER = logging.getLogger(__name__)
 
 
-# ==================== БАЗОВЫЙ КЛАСС ====================
+# ==================== BASE CLASS ====================
 
 class ZeekrBaseSensor(CoordinatorEntity, SensorEntity):
     """Base class for Zeekr sensors"""
@@ -41,10 +41,10 @@ class ZeekrBaseSensor(CoordinatorEntity, SensorEntity):
         self.vin = vin
         self._attr_has_entity_name = True
 
-        # Уникальный ID для каждого датчика
+        # Unique ID for each sensor
         self._attr_unique_id = f"{DOMAIN}_{vin}_{self._get_sensor_type()}"
 
-        # Информация об устройстве
+        # Device information
         self._attr_device_info = {
             "identifiers": {(DOMAIN, vin)},
             "name": f"Zeekr {vin}",
@@ -68,12 +68,12 @@ class ZeekrBaseSensor(CoordinatorEntity, SensorEntity):
         self.async_write_ha_state()
 
 
-# ==================== ГРУППА 1: СТАТУС И ОХРАНА ====================
+# ==================== GROUP 1: STATUS AND SECURITY ====================
 
 class ZeekrLastUpdateTimeSensor(ZeekrBaseSensor):
-    """Последнее обновление данных - когда машина в последний раз подключалась к серверу"""
+    """Last update time - when the vehicle last connected to the server"""
 
-    _attr_name = "Последнее обновление"
+    _attr_name = "Last Update"
     _attr_icon = "mdi:cloud-upload"
 
     def _get_sensor_type(self) -> str:
@@ -107,25 +107,25 @@ class ZeekrLastUpdateTimeSensor(ZeekrBaseSensor):
                 days = hours // 24
 
                 if days > 0:
-                    time_ago = f"{days} дней назад"
+                    time_ago = f"{days} days ago"
                 elif hours > 0:
-                    time_ago = f"{hours} часов назад"
+                    time_ago = f"{hours} hours ago"
                 elif minutes > 0:
-                    time_ago = f"{minutes} минут назад"
+                    time_ago = f"{minutes} minutes ago"
                 else:
-                    time_ago = "только что"
+                    time_ago = "just now"
 
                 return {
-                    "Как давно": time_ago,
-                    "Временная метка": timestamp,
+                    "How long ago": time_ago,
+                    "Timestamp": timestamp,
                 }
         return {}
 
 
 class ZeekrBatterySensor(ZeekrBaseSensor):
-    """🔋 Заряд батареи"""
+    """🔋 Battery Charge"""
 
-    _attr_name = "Заряд батареи"
+    _attr_name = "Battery Charge"
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_icon = ICON_BATTERY
     _attr_device_class = SensorDeviceClass.BATTERY
@@ -150,35 +150,35 @@ class ZeekrBatterySensor(ZeekrBaseSensor):
         if parser:
             battery = parser.get_battery_info()
             return {
-                "Статус зарядки": battery['charge_status'],
-                "Запас хода": f"{battery['distance_to_empty']} км",
-                "Среднее потребление": f"{battery['avg_power_consumption']} кВт",
+                "Charge Status": battery['charge_status'],
+                "Remaining Range": f"{battery['distance_to_empty']} km",
+                "Average Consumption": f"{battery['avg_power_consumption']} kW",
             }
         return {}
 
 
 class ZeekrTheftProtectionSensor(ZeekrBaseSensor):
-    """Сенсор защиты от кражи (AHBC)"""
+    """AHBC theft-protection sensor"""
 
-    _attr_name = "Режим охраны"  # Имя в интерфейсе
-    _attr_icon = "mdi:shield-check"  # Иконка щита
+    _attr_name = "Security Mode"  # Display name in Home Assistant
+    _attr_icon = "mdi:shield-check"  # Shield icon
 
     def _get_sensor_type(self) -> str:
         return "theft_protection_ahbc"
 
     @property
     def native_value(self) -> str:
-        """Возвращает статус: Включена/Выключена"""
+        """Return status: enabled/disabled"""
         parser = self._get_parser()
         if parser:
             return parser.get_ahbc_status()
-        return "Недоступно"
+        return "Unavailable"
 
 
 class ZeekrElectricParkBrakeStatusSensor(ZeekrBaseSensor):
-    """Статус электронного ручного тормоза"""
+    """Electronic parking brake status"""
 
-    _attr_name = "Электронный ручной тормоз"
+    _attr_name = "Electronic Parking Brake"
     _attr_icon = "mdi:car-brake-parking"
 
     def _get_sensor_type(self) -> str:
@@ -186,27 +186,27 @@ class ZeekrElectricParkBrakeStatusSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть статус тормоза парковки"""
+        """Return the parking brake status"""
         parser = self._get_parser()
         if parser:
             safety = parser.data.get('additionalVehicleStatus', {}).get('drivingSafetyStatus', {})
             status = int(safety.get('electricParkBrakeStatus', 0))
 
             status_map = {
-                0: '❌ Выключен',
-                1: '✅ Включен (парковка)',
-                2: '⚠️ Ошибка',
+                0: '❌ Off',
+                1: '✅ Engaged (parking)',
+                2: '⚠️ Error',
             }
-            return status_map.get(status, 'Неизвестно')
+            return status_map.get(status, 'Unknown')
         return None
 
 
-# ==================== ОСНОВНЫЕ ДАТЧИКИ ====================
+# ==================== CORE SENSORS ====================
 
 class ZeekrAuxBatteryPercentageSensor(ZeekrBaseSensor):
-    """12V вспомогательная батарея"""
+    """12V auxiliary battery"""
 
-    _attr_name = "12V батарея"
+    _attr_name = "12V Battery"
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_icon = "mdi:battery-12v"
     _attr_device_class = SensorDeviceClass.BATTERY
@@ -226,9 +226,9 @@ class ZeekrAuxBatteryPercentageSensor(ZeekrBaseSensor):
 
 
 class ZeekrAuxBatteryVoltageSensor(ZeekrBaseSensor):
-    """12V вспомогательная батарея напряжение"""
+    """12V auxiliary battery voltage"""
 
-    _attr_name = "12V напряжение"
+    _attr_name = "12V Voltage"
     _attr_native_unit_of_measurement = "V"
     _attr_icon = "mdi:battery-12v"
     _attr_device_class = SensorDeviceClass.VOLTAGE
@@ -248,9 +248,9 @@ class ZeekrAuxBatteryVoltageSensor(ZeekrBaseSensor):
 
 
 class ZeekrDistanceToEmptySensor(ZeekrBaseSensor):
-    """Запас хода до полной разрядки"""
+    """Range to empty"""
 
-    _attr_name = "Запас хода"
+    _attr_name = "Remaining Range"
     _attr_native_unit_of_measurement = UnitOfLength.KILOMETERS
     _attr_icon = "mdi:road-variant"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -269,9 +269,9 @@ class ZeekrDistanceToEmptySensor(ZeekrBaseSensor):
 
 
 class ZeekrInteriorTempSensor(ZeekrBaseSensor):
-    """Температура внутри салона"""
+    """Interior temperature"""
 
-    _attr_name = "Температура салона"
+    _attr_name = "Cabin Temperature"
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
     _attr_icon = ICON_TEMPERATURE
     _attr_device_class = SensorDeviceClass.TEMPERATURE
@@ -291,9 +291,9 @@ class ZeekrInteriorTempSensor(ZeekrBaseSensor):
 
 
 class ZeekrExteriorTempSensor(ZeekrBaseSensor):
-    """Температура снаружи"""
+    """Exterior temperature"""
 
-    _attr_name = "Температура снаружи"
+    _attr_name = "Exterior temperature"
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
     _attr_icon = ICON_TEMPERATURE
     _attr_device_class = SensorDeviceClass.TEMPERATURE
@@ -313,9 +313,9 @@ class ZeekrExteriorTempSensor(ZeekrBaseSensor):
 
 
 class ZeekrOdometerSensor(ZeekrBaseSensor):
-    """Общее расстояние поездок"""
+    """Total travel distance"""
 
-    _attr_name = "Одометр"
+    _attr_name = "Odometer"
     _attr_native_unit_of_measurement = UnitOfLength.KILOMETERS
     _attr_icon = ICON_CAR
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
@@ -334,9 +334,9 @@ class ZeekrOdometerSensor(ZeekrBaseSensor):
 
 
 class ZeekrCurrentSpeedSensor(ZeekrBaseSensor):
-    """Текущая скорость движения"""
+    """Current speed"""
 
-    _attr_name = "Текущая скорость"
+    _attr_name = "Current Speed"
     _attr_native_unit_of_measurement = UnitOfSpeed.KILOMETERS_PER_HOUR
     _attr_icon = "mdi:speedometer"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -355,9 +355,9 @@ class ZeekrCurrentSpeedSensor(ZeekrBaseSensor):
 
 
 class ZeekrAverageSpeedSensor(ZeekrBaseSensor):
-    """Средняя скорость за поездку"""
+    """Average trip speed"""
 
-    _attr_name = "Средняя скорость"
+    _attr_name = "Average Speed"
     _attr_native_unit_of_measurement = UnitOfSpeed.KILOMETERS_PER_HOUR
     _attr_icon = "mdi:speedometer"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -376,9 +376,9 @@ class ZeekrAverageSpeedSensor(ZeekrBaseSensor):
 
 
 class ZeekrDaysToServiceSensor(ZeekrBaseSensor):
-    """Дней до планового ТО"""
+    """Days until scheduled service"""
 
-    _attr_name = "Дней до ТО"
+    _attr_name = "Days to Service"
     _attr_icon = "mdi:calendar-alert"
     _attr_state_class = SensorStateClass.MEASUREMENT
 
@@ -396,9 +396,9 @@ class ZeekrDaysToServiceSensor(ZeekrBaseSensor):
 
 
 class ZeekrDistanceToServiceSensor(ZeekrBaseSensor):
-    """Км до планового ТО"""
+    """Distance until scheduled service"""
 
-    _attr_name = "Км до ТО"
+    _attr_name = "Distance to Service"
     _attr_native_unit_of_measurement = UnitOfLength.KILOMETERS
     _attr_icon = "mdi:road-variant"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -417,9 +417,9 @@ class ZeekrDistanceToServiceSensor(ZeekrBaseSensor):
 
 
 class ZeekrTirePressureDriverSensor(ZeekrBaseSensor):
-    """Давление в передней левой шине"""
+    """Front-left tire pressure"""
 
-    _attr_name = "Шина ПЛ давление"
+    _attr_name = "Front Left Tire Pressure"
     _attr_native_unit_of_measurement = UnitOfPressure.KPA
     _attr_icon = "mdi:tire"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -438,9 +438,9 @@ class ZeekrTirePressureDriverSensor(ZeekrBaseSensor):
 
 
 class ZeekrTirePressurePassengerSensor(ZeekrBaseSensor):
-    """Давление в передней правой шине"""
+    """Front-right tire pressure"""
 
-    _attr_name = "Шина ПП давление"
+    _attr_name = "Front Right Tire Pressure"
     _attr_native_unit_of_measurement = UnitOfPressure.KPA
     _attr_icon = "mdi:tire"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -459,9 +459,9 @@ class ZeekrTirePressurePassengerSensor(ZeekrBaseSensor):
 
 
 class ZeekrTirePressureDriverRearSensor(ZeekrBaseSensor):
-    """Давление в задней левой шине"""
+    """Rear-left tire pressure"""
 
-    _attr_name = "Шина ЗЛ давление"
+    _attr_name = "Rear Left Tire Pressure"
     _attr_native_unit_of_measurement = UnitOfPressure.KPA
     _attr_icon = "mdi:tire"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -480,9 +480,9 @@ class ZeekrTirePressureDriverRearSensor(ZeekrBaseSensor):
 
 
 class ZeekrTirePressurePassengerRearSensor(ZeekrBaseSensor):
-    """Давление в задней правой шине"""
+    """Rear-right tire pressure"""
 
-    _attr_name = "Шина ЗП давление"
+    _attr_name = "Rear Right Tire Pressure"
     _attr_native_unit_of_measurement = UnitOfPressure.KPA
     _attr_icon = "mdi:tire"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -501,9 +501,9 @@ class ZeekrTirePressurePassengerRearSensor(ZeekrBaseSensor):
 
 
 class ZeekrInteriorPM25Sensor(ZeekrBaseSensor):
-    """PM2.5 частицы в салоне"""
+    """Interior PM2.5 particles"""
 
-    _attr_name = "PM2.5 салона"
+    _attr_name = "Interior PM2.5"
     _attr_native_unit_of_measurement = "μg/m³"
     _attr_icon = "mdi:air-filter"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -521,13 +521,13 @@ class ZeekrInteriorPM25Sensor(ZeekrBaseSensor):
         return None
 
 
-# ==================== РАСШИРЕННЫЕ ДАТЧИКИ ====================
-# 🔋 БАТАРЕЯ
+# ==================== EXTENDED SENSORS ====================
+# 🔋 BATTERY
 
 class ZeekrHVTempLevelSensor(ZeekrBaseSensor):
-    """Уровень температуры высоковольтной батареи"""
+    """High-voltage battery temperature level"""
 
-    _attr_name = "Температура батареи"
+    _attr_name = "Battery Temperature"
     _attr_icon = "mdi:thermometer-alert"
 
     def _get_sensor_type(self) -> str:
@@ -535,30 +535,30 @@ class ZeekrHVTempLevelSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть уровень температуры (текст)"""
+        """Return the temperature level text"""
         parser = self._get_parser()
         if parser:
             battery = parser.get_battery_info()
             return battery['hv_temp_level']
-        return "Неизвестно"
+        return "Unknown"
 
     @property
     def extra_state_attributes(self) -> Dict[str, Any]:
-        """Дополнительная информация"""
+        """Additional details"""
         parser = self._get_parser()
         if parser:
             battery = parser.get_battery_info()
             return {
-                "Числовое значение": battery['hv_temp_level_numeric'],
-                "Значения": "1=теплая 🔥, 2=немного холодная ❄️, 3=холодная 🥶, 4=сильно холодная 🧊"
+                "Numeric value": battery['hv_temp_level_numeric'],
+                "Values": "1=warm 🔥, 2=slightly cold ❄️, 3=cold 🥶, 4=very cold 🧊"
             }
         return {}
 
 
 class ZeekrTimeToFullChargeSensor(ZeekrBaseSensor):
-    """Время до полной зарядки батареи"""
+    """Time until full charge"""
 
-    _attr_name = "Время до полной зарядки"
+    _attr_name = "Time to Full Charge"
     _attr_native_unit_of_measurement = "min"
     _attr_icon = "mdi:battery-charging"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -568,7 +568,7 @@ class ZeekrTimeToFullChargeSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> int:
-        """Вернуть время зарядки"""
+        """Return charging time"""
         parser = self._get_parser()
         if parser:
             battery = parser.get_battery_info()
@@ -577,12 +577,12 @@ class ZeekrTimeToFullChargeSensor(ZeekrBaseSensor):
         return None
 
 
-# ==================== 🌡️ ТЕМПЕРАТУРА ШИН ====================
+# ==================== 🌡️ TIRE TEMPERATURES ====================
 
 class ZeekrTireTempDriverSensor(ZeekrBaseSensor):
-    """Температура передней левой шины"""
+    """Front-left tire temperature"""
 
-    _attr_name = "Шина ПЛ температура"
+    _attr_name = "Front Left Tire Temperature"
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
     _attr_icon = "mdi:thermometer-lines"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -592,7 +592,7 @@ class ZeekrTireTempDriverSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> float:
-        """Вернуть температуру"""
+        """Return temperature"""
         parser = self._get_parser()
         if parser:
             tires = parser.get_tires_info()
@@ -601,9 +601,9 @@ class ZeekrTireTempDriverSensor(ZeekrBaseSensor):
 
 
 class ZeekrTireTempPassengerSensor(ZeekrBaseSensor):
-    """Температура передней правой шины"""
+    """Front-right tire temperature"""
 
-    _attr_name = "Шина ПП температура"
+    _attr_name = "Front Right Tire Temperature"
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
     _attr_icon = "mdi:thermometer-lines"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -613,7 +613,7 @@ class ZeekrTireTempPassengerSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> float:
-        """Вернуть температуру"""
+        """Return temperature"""
         parser = self._get_parser()
         if parser:
             tires = parser.get_tires_info()
@@ -622,9 +622,9 @@ class ZeekrTireTempPassengerSensor(ZeekrBaseSensor):
 
 
 class ZeekrTireTempDriverRearSensor(ZeekrBaseSensor):
-    """Температура задней левой шины"""
+    """Rear-left tire temperature"""
 
-    _attr_name = "Шина ЗЛ температура"
+    _attr_name = "Rear Left Tire Temperature"
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
     _attr_icon = "mdi:thermometer-lines"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -634,7 +634,7 @@ class ZeekrTireTempDriverRearSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> float:
-        """Вернуть температуру"""
+        """Return temperature"""
         parser = self._get_parser()
         if parser:
             tires = parser.get_tires_info()
@@ -643,9 +643,9 @@ class ZeekrTireTempDriverRearSensor(ZeekrBaseSensor):
 
 
 class ZeekrTireTempPassengerRearSensor(ZeekrBaseSensor):
-    """Температура задней правой шины"""
+    """Rear-right tire temperature"""
 
-    _attr_name = "Шина ЗП температура"
+    _attr_name = "Rear Right Tire Temperature"
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
     _attr_icon = "mdi:thermometer-lines"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -655,7 +655,7 @@ class ZeekrTireTempPassengerRearSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> float:
-        """Вернуть температуру"""
+        """Return temperature"""
         parser = self._get_parser()
         if parser:
             tires = parser.get_tires_info()
@@ -663,12 +663,12 @@ class ZeekrTireTempPassengerRearSensor(ZeekrBaseSensor):
         return None
 
 
-# ==================== 🚙 ДВИЖЕНИЕ (РАСШИРЕНО) ====================
+# ==================== 🚙 MOVEMENT (EXTENDED) ====================
 
 class ZeekrTripMeter1Sensor(ZeekrBaseSensor):
-    """Счётчик поездки 1"""
+    """Trip meter 1"""
 
-    _attr_name = "Счётчик 1"
+    _attr_name = "Trip Meter 1"
     _attr_native_unit_of_measurement = UnitOfLength.KILOMETERS
     _attr_icon = "mdi:road-variant"
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
@@ -678,7 +678,7 @@ class ZeekrTripMeter1Sensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> float:
-        """Вернуть расстояние"""
+        """Return distance"""
         parser = self._get_parser()
         if parser:
             movement = parser.get_movement_info()
@@ -687,9 +687,9 @@ class ZeekrTripMeter1Sensor(ZeekrBaseSensor):
 
 
 class ZeekrTripMeter2Sensor(ZeekrBaseSensor):
-    """Счётчик поездки 2"""
+    """Trip meter 2"""
 
-    _attr_name = "Счётчик 2"
+    _attr_name = "Trip Meter 2"
     _attr_native_unit_of_measurement = UnitOfLength.KILOMETERS
     _attr_icon = "mdi:road-variant"
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
@@ -699,7 +699,7 @@ class ZeekrTripMeter2Sensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> float:
-        """Вернуть расстояние"""
+        """Return distance"""
         parser = self._get_parser()
         if parser:
             movement = parser.get_movement_info()
@@ -707,12 +707,12 @@ class ZeekrTripMeter2Sensor(ZeekrBaseSensor):
         return None
 
 
-# ==================== 🔧 ОБСЛУЖИВАНИЕ (РАСШИРЕНО) ====================
+# ==================== 🔧 MAINTENANCE (EXTENDED) ====================
 
 class ZeekrEngineHoursToServiceSensor(ZeekrBaseSensor):
-    """Часов работы до ТО"""
+    """Engine hours until service"""
 
-    _attr_name = "Часов до ТО"
+    _attr_name = "Hours to Service"
     _attr_native_unit_of_measurement = "h"
     _attr_icon = "mdi:wrench-clock"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -722,7 +722,7 @@ class ZeekrEngineHoursToServiceSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> int:
-        """Вернуть часы"""
+        """Return hours"""
         parser = self._get_parser()
         if parser:
             maintenance = parser.get_maintenance_info()
@@ -731,9 +731,9 @@ class ZeekrEngineHoursToServiceSensor(ZeekrBaseSensor):
 
 
 class ZeekrBrakeFluidLevelSensor(ZeekrBaseSensor):
-    """Уровень тормозной жидкости"""
+    """Brake fluid level"""
 
-    _attr_name = "Тормозная жидкость"
+    _attr_name = "Brake Fluid"
     _attr_icon = "mdi:water-opacity"
 
     def _get_sensor_type(self) -> str:
@@ -741,18 +741,18 @@ class ZeekrBrakeFluidLevelSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть уровень"""
+        """Return level"""
         parser = self._get_parser()
         if parser:
             maintenance = parser.get_maintenance_info()
             return maintenance['brake_fluid_level']
-        return "Неизвестно"
+        return "Unknown"
 
 
 class ZeekrWasherFluidLevelSensor(ZeekrBaseSensor):
-    """Уровень жидкости омывателя"""
+    """Washer fluid level"""
 
-    _attr_name = "Омыватель"
+    _attr_name = "Washer Fluid"
     _attr_icon = "mdi:water-opacity"
 
     def _get_sensor_type(self) -> str:
@@ -760,18 +760,18 @@ class ZeekrWasherFluidLevelSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть уровень"""
+        """Return level"""
         parser = self._get_parser()
         if parser:
             maintenance = parser.get_maintenance_info()
             return maintenance['washer_fluid_level']
-        return "Неизвестно"
+        return "Unknown"
 
 
 class ZeekrEngineCoolantLevelSensor(ZeekrBaseSensor):
-    """Уровень охлаждающей жидкости"""
+    """Coolant level"""
 
-    _attr_name = "Охлаждающая жидкость"
+    _attr_name = "Coolant"
     _attr_icon = "mdi:water-opacity"
 
     def _get_sensor_type(self) -> str:
@@ -779,20 +779,20 @@ class ZeekrEngineCoolantLevelSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть уровень"""
+        """Return level"""
         parser = self._get_parser()
         if parser:
             maintenance = parser.get_maintenance_info()
             return maintenance['engine_coolant_level']
-        return "Неизвестно"
+        return "Unknown"
 
 
-# ==================== 💨 ВОЗДУХ (РАСШИРЕНО) ====================
+# ==================== 💨 AIR QUALITY (EXTENDED) ====================
 
 class ZeekrExteriorPM25LevelSensor(ZeekrBaseSensor):
-    """Уровень PM2.5 снаружи"""
+    """Exterior PM2.5 level"""
 
-    _attr_name = "PM2.5 снаружи"
+    _attr_name = "Exterior PM2.5"
     _attr_icon = "mdi:air-filter"
 
     def _get_sensor_type(self) -> str:
@@ -800,19 +800,19 @@ class ZeekrExteriorPM25LevelSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть уровень"""
+        """Return level"""
         parser = self._get_parser()
         if parser:
             pollution = parser.get_pollution_info()
             return pollution['interior_pm25_level']
         return None
 
-# ==================== 🅿️ ПАРКОВКА ====================
+# ==================== 🅿️ PARKING ====================
 
 class ZeekrParkDurationSensor(ZeekrBaseSensor):
-    """Длительность парковки"""
+    """Parking duration"""
 
-    _attr_name = "Время парковки"
+    _attr_name = "Parking Time"
     _attr_icon = "mdi:parking"
 
     def _get_sensor_type(self) -> str:
@@ -820,7 +820,7 @@ class ZeekrParkDurationSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть длительность"""
+        """Return duration"""
         parser = self._get_parser()
         if parser:
             park = parser.get_park_info()
@@ -829,24 +829,24 @@ class ZeekrParkDurationSensor(ZeekrBaseSensor):
 
     @property
     def extra_state_attributes(self) -> Dict[str, Any]:
-        """Дополнительные атрибуты"""
+        """Additional attributes"""
         parser = self._get_parser()
         if parser:
             park = parser.get_park_info()
             return {
-                'припаркована_с': park['parked_since'],
-                'секунд_припаркована': park['total_seconds'],
-                'припаркована': park['is_parked'],
+                'parked_since': park['parked_since'],
+                'parked_seconds': park['total_seconds'],
+                'parked': park['is_parked'],
             }
         return {}
 
 
-# ==================== 🎯 КЛИМАТ (РАСШИРЕНО) ====================
+# ==================== 🎯 CLIMATE (EXTENDED) ====================
 
 class ZeekrSteeringWheelHeatingStatusSensor(ZeekrBaseSensor):
-    """Статус обогрева руля"""
+    """Steering wheel heating status"""
 
-    _attr_name = "Обогрев руля"
+    _attr_name = "Steering Wheel Heating"
     _attr_icon = "mdi:heating"
 
     def _get_sensor_type(self) -> str:
@@ -854,7 +854,7 @@ class ZeekrSteeringWheelHeatingStatusSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть статус"""
+        """Return status"""
         parser = self._get_parser()
         if parser:
             climate = parser.get_climate_info()
@@ -863,9 +863,9 @@ class ZeekrSteeringWheelHeatingStatusSensor(ZeekrBaseSensor):
 
 
 class ZeekrDriverHeatingStatusSensor(ZeekrBaseSensor):
-    """Статус обогрева водителя"""
+    """Driver seat heating status"""
 
-    _attr_name = "Обогрев водителя"
+    _attr_name = "Driver Heating"
     _attr_icon = "mdi:heating"
 
     def _get_sensor_type(self) -> str:
@@ -873,7 +873,7 @@ class ZeekrDriverHeatingStatusSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть статус"""
+        """Return status"""
         parser = self._get_parser()
         if parser:
             climate = parser.get_climate_info()
@@ -882,9 +882,9 @@ class ZeekrDriverHeatingStatusSensor(ZeekrBaseSensor):
 
 
 class ZeekrPassengerHeatingStatusSensor(ZeekrBaseSensor):
-    """Статус обогрева пассажира"""
+    """Passenger seat heating status"""
 
-    _attr_name = "Обогрев пассажира"
+    _attr_name = "Passenger Heating"
     _attr_icon = "mdi:heating"
 
     def _get_sensor_type(self) -> str:
@@ -892,7 +892,7 @@ class ZeekrPassengerHeatingStatusSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть статус"""
+        """Return status"""
         parser = self._get_parser()
         if parser:
             climate = parser.get_climate_info()
@@ -900,12 +900,12 @@ class ZeekrPassengerHeatingStatusSensor(ZeekrBaseSensor):
         return None
 
 
-# ==================== 📍 КООРДИНАТЫ ====================
+# ==================== 📍 COORDINATES ====================
 
 class ZeekrLatitudeSensor(ZeekrBaseSensor):
-    """Широта (координаты GPS)"""
+    """Latitude (GPS coordinates)"""
 
-    _attr_name = "Широта"
+    _attr_name = "Latitude"
     _attr_icon = "mdi:latitude"
     _attr_state_class = SensorStateClass.MEASUREMENT
 
@@ -914,7 +914,7 @@ class ZeekrLatitudeSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> float:
-        """Вернуть широту"""
+        """Return latitude"""
         parser = self._get_parser()
         if parser:
             position = parser.get_position_info()
@@ -923,9 +923,9 @@ class ZeekrLatitudeSensor(ZeekrBaseSensor):
 
 
 class ZeekrLongitudeSensor(ZeekrBaseSensor):
-    """Долгота (координаты GPS)"""
+    """Longitude (GPS coordinates)"""
 
-    _attr_name = "Долгота"
+    _attr_name = "Longitude"
     _attr_icon = "mdi:longitude"
     _attr_state_class = SensorStateClass.MEASUREMENT
 
@@ -934,7 +934,7 @@ class ZeekrLongitudeSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> float:
-        """Вернуть долготу"""
+        """Return longitude"""
         parser = self._get_parser()
         if parser:
             position = parser.get_position_info()
@@ -943,9 +943,9 @@ class ZeekrLongitudeSensor(ZeekrBaseSensor):
 
 
 class ZeekrAltitudeSensor(ZeekrBaseSensor):
-    """Высота над уровнем моря"""
+    """Altitude above sea level"""
 
-    _attr_name = "Высота"
+    _attr_name = "Altitude"
     _attr_native_unit_of_measurement = UnitOfLength.METERS
     _attr_icon = "mdi:elevation-rise"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -955,7 +955,7 @@ class ZeekrAltitudeSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> int:
-        """Вернуть высоту"""
+        """Return altitude"""
         parser = self._get_parser()
         if parser:
             position = parser.get_position_info()
@@ -963,12 +963,12 @@ class ZeekrAltitudeSensor(ZeekrBaseSensor):
         return None
 
 
-# ==================== 🔐 ИНФОРМАЦИЯ ====================
+# ==================== 🔐 INFORMATION ====================
 
 class ZeekrPropulsionTypeSensor(ZeekrBaseSensor):
-    """Тип пропульсии (тип двигателя)"""
+    """Propulsion type"""
 
-    _attr_name = "Тип пропульсии"
+    _attr_name = "Propulsion Type"
     _attr_icon = "mdi:fuel-cell"
 
     def _get_sensor_type(self) -> str:
@@ -976,19 +976,19 @@ class ZeekrPropulsionTypeSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть тип"""
+        """Return type"""
         parser = self._get_parser()
         if parser:
             return parser.get_propulsion_type()
         return None
 
 
-# ==================== ⚡ ЗАРЯДКА ====================
+# ==================== ⚡ CHARGING ====================
 
 class ZeekrDCChargePowerSensor(ZeekrBaseSensor):
-    """Мощность DC зарядки (быстрая зарядка)"""
+    """DC charging power (fast charging)"""
 
-    _attr_name = "Мощность DC зарядки"
+    _attr_name = "DC Charging Power"
     _attr_native_unit_of_measurement = "kW"
     _attr_icon = "mdi:lightning-bolt"
     _attr_device_class = SensorDeviceClass.POWER
@@ -999,7 +999,7 @@ class ZeekrDCChargePowerSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> float:
-        """Вернуть мощность DC зарядки"""
+        """Return DC charging power"""
         parser = self._get_parser()
         if parser:
             charging = parser.get_charging_info()
@@ -1008,9 +1008,9 @@ class ZeekrDCChargePowerSensor(ZeekrBaseSensor):
 
 
 class ZeekrDCChargeVoltageExtendedSensor(ZeekrBaseSensor):
-    """Напряжение DC зарядки (детально)"""
+    """DC charging voltage (detailed)"""
 
-    _attr_name = "Напряжение DC зарядки"
+    _attr_name = "DC Charging Voltage"
     _attr_native_unit_of_measurement = "V"
     _attr_icon = "mdi:flash"
     _attr_device_class = SensorDeviceClass.VOLTAGE
@@ -1021,7 +1021,7 @@ class ZeekrDCChargeVoltageExtendedSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> float:
-        """Вернуть напряжение на зарядке"""
+        """Return charging voltage"""
         parser = self._get_parser()
         if parser:
             charging = parser.get_charging_info()
@@ -1030,9 +1030,9 @@ class ZeekrDCChargeVoltageExtendedSensor(ZeekrBaseSensor):
 
 
 class ZeekrDCChargeCurrentExtendedSensor(ZeekrBaseSensor):
-    """Ток DC зарядки (детально)"""
+    """DC charging current (detailed)"""
 
-    _attr_name = "Ток DC зарядки"
+    _attr_name = "DC Charging Current"
     _attr_native_unit_of_measurement = "A"
     _attr_icon = "mdi:lightning-bolt"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -1042,7 +1042,7 @@ class ZeekrDCChargeCurrentExtendedSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> float:
-        """Вернуть ток зарядки"""
+        """Return charging current"""
         parser = self._get_parser()
         if parser:
             charging = parser.get_charging_info()
@@ -1051,9 +1051,9 @@ class ZeekrDCChargeCurrentExtendedSensor(ZeekrBaseSensor):
 
 
 class ZeekrDCChargeStatusDetailedSensor(ZeekrBaseSensor):
-    """Статус DC зарядки (детально)"""
+    """DC charging status (detailed)"""
 
-    _attr_name = "Статус DC зарядки"
+    _attr_name = "DC Charging Status"
     _attr_icon = "mdi:battery-charging-wireless"
 
     def _get_sensor_type(self) -> str:
@@ -1061,7 +1061,7 @@ class ZeekrDCChargeStatusDetailedSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть статус DC зарядки"""
+        """Return DC charging status"""
         parser = self._get_parser()
         if parser:
             charging = parser.get_charging_info()
@@ -1070,9 +1070,9 @@ class ZeekrDCChargeStatusDetailedSensor(ZeekrBaseSensor):
 
 
 class ZeekrDCDCStatusSensor(ZeekrBaseSensor):
-    """Статус DC/DC конвертера (400В → 12В)"""
+    """DC/DC converter status (400V -> 12V)"""
 
-    _attr_name = "DC/DC конвертер"
+    _attr_name = "DC/DC Converter"
     _attr_icon = "mdi:power-settings"
 
     def _get_sensor_type(self) -> str:
@@ -1080,7 +1080,7 @@ class ZeekrDCDCStatusSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть статус конвертера"""
+        """Return converter status"""
         parser = self._get_parser()
         if parser:
             charging = parser.get_charging_info()
@@ -1089,23 +1089,23 @@ class ZeekrDCDCStatusSensor(ZeekrBaseSensor):
 
     @property
     def extra_state_attributes(self) -> Dict[str, Any]:
-        """Дополнительные атрибуты"""
+        """Additional attributes"""
         parser = self._get_parser()
         if parser:
             charging = parser.get_charging_info()
             return {
-                "Активирован": charging['dc_dc_activated'],
-                "Назначение": "Преобразует 400В в 12В для питания компонентов"
+                "Activated": charging['dc_dc_activated'],
+                "Purpose": "Converts 400V to 12V to power vehicle components"
             }
         return {}
 
 
-# ==================== РАЗРЯДКА (V2L, V2H) ====================
+# ==================== DISCHARGE (V2L, V2H) ====================
 
 class ZeekrDischargePowerSensor(ZeekrBaseSensor):
-    """Мощность разрядки V2L/V2H (питание дома/приборов)"""
+    """Discharge power V2L/V2H (powering a home/device)"""
 
-    _attr_name = "Мощность разрядки"
+    _attr_name = "Discharge Power"
     _attr_native_unit_of_measurement = "kW"
     _attr_icon = "mdi:battery-arrow-up"
     _attr_device_class = SensorDeviceClass.POWER
@@ -1116,7 +1116,7 @@ class ZeekrDischargePowerSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> float:
-        """Вернуть мощность разрядки"""
+        """Return discharge power"""
         parser = self._get_parser()
         if parser:
             charging = parser.get_charging_info()
@@ -1125,9 +1125,9 @@ class ZeekrDischargePowerSensor(ZeekrBaseSensor):
 
 
 class ZeekrDischargeVoltageSensor(ZeekrBaseSensor):
-    """Напряжение разрядки V2L/V2H"""
+    """Discharge voltage V2L/V2H"""
 
-    _attr_name = "Напряжение разрядки"
+    _attr_name = "Discharge Voltage"
     _attr_native_unit_of_measurement = "V"
     _attr_icon = "mdi:flash"
     _attr_device_class = SensorDeviceClass.VOLTAGE
@@ -1138,7 +1138,7 @@ class ZeekrDischargeVoltageSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> float:
-        """Вернуть напряжение разрядки"""
+        """Return discharge voltage"""
         parser = self._get_parser()
         if parser:
             charging = parser.get_charging_info()
@@ -1147,9 +1147,9 @@ class ZeekrDischargeVoltageSensor(ZeekrBaseSensor):
 
 
 class ZeekrDischargeCurrentSensor(ZeekrBaseSensor):
-    """Ток разрядки V2L/V2H"""
+    """Discharge current V2L/V2H"""
 
-    _attr_name = "Ток разрядки"
+    _attr_name = "Discharge Current"
     _attr_native_unit_of_measurement = "A"
     _attr_icon = "mdi:lightning-bolt"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -1159,7 +1159,7 @@ class ZeekrDischargeCurrentSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> float:
-        """Вернуть ток разрядки"""
+        """Return discharge current"""
         parser = self._get_parser()
         if parser:
             charging = parser.get_charging_info()
@@ -1168,9 +1168,9 @@ class ZeekrDischargeCurrentSensor(ZeekrBaseSensor):
 
 
 class ZeekrChargerStateSensor(ZeekrBaseSensor):
-    """Состояние зарядного устройства"""
+    """Charger state"""
 
-    _attr_name = "Состояние зарядки"
+    _attr_name = "Charger State"
     _attr_icon = "mdi:power-plug"
 
     def _get_sensor_type(self) -> str:
@@ -1178,20 +1178,20 @@ class ZeekrChargerStateSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть состояние зарядного устройства"""
+        """Return the charger state"""
         parser = self._get_parser()
         if parser:
             charging = parser.get_charging_info()
             return charging['charger_state']
         return None
 
-# ==================== ДВИЖЕНИЕ И СКОРОСТЬ ====================
+# ==================== MOVEMENT AND SPEED ====================
 
 
 class ZeekrBrakeStatusSensor(ZeekrBaseSensor):
-    """Статус тормозов / стоп-сигналы"""
+    """Brake / stop-light status"""
 
-    _attr_name = "Статус тормозов"
+    _attr_name = "Brake Status"
     _attr_icon = "mdi:brake-fluid"
 
     def _get_sensor_type(self) -> str:
@@ -1199,7 +1199,7 @@ class ZeekrBrakeStatusSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть статус тормозов"""
+        """Return brake status"""
         parser = self._get_parser()
         if parser:
             brake = parser.get_brake_status()
@@ -1208,21 +1208,21 @@ class ZeekrBrakeStatusSensor(ZeekrBaseSensor):
 
     @property
     def extra_state_attributes(self) -> Dict[str, Any]:
-        """Дополнительная информация"""
+        """Additional details"""
         parser = self._get_parser()
         if parser:
             brake = parser.get_brake_status()
             return {
-                'Тормозит': brake['is_braking'],
-                'Стоп_сигналы': brake['stop_lights_on'],
+                'Braking': brake['is_braking'],
+                'stop_lights': brake['stop_lights_on'],
             }
         return {}
 
 
 class ZeekrEnergyRecoverySensor(ZeekrBaseSensor):
-    """Статус рекуперативного торможения (восстановление энергии)"""
+    """Energy recovery status"""
 
-    _attr_name = "Рекуперация энергии"
+    _attr_name = "Energy Recovery"
     _attr_icon = "mdi:lightning-bolt"
 
     def _get_sensor_type(self) -> str:
@@ -1230,7 +1230,7 @@ class ZeekrEnergyRecoverySensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть статус восстановления энергии"""
+        """Return the energy recovery status"""
         parser = self._get_parser()
         if parser:
             recovery = parser.estimate_battery_recovery()
@@ -1239,23 +1239,23 @@ class ZeekrEnergyRecoverySensor(ZeekrBaseSensor):
 
     @property
     def extra_state_attributes(self) -> Dict[str, Any]:
-        """Дополнительная информация"""
+        """Additional details"""
         parser = self._get_parser()
         if parser:
             recovery = parser.estimate_battery_recovery()
             return {
-                'Восстанавливается': recovery['is_recovering'],
-                'Тормозит': recovery['is_braking'],
-                'Скорость': recovery['speed'],
-                'Текущий_заряд': recovery['current_charge'],
+                'recovering': recovery['is_recovering'],
+                'Braking': recovery['is_braking'],
+                'speed': recovery['speed'],
+                'current_charge': recovery['current_charge'],
             }
         return {}
 
 
 class ZeekrGearStatusSensor(ZeekrBaseSensor):
-    """Статус коробки передач"""
+    """Gearbox status"""
 
-    _attr_name = "Коробка передач"
+    _attr_name = "Gearbox"
     _attr_icon = "mdi:transmission-tower"
 
     def _get_sensor_type(self) -> str:
@@ -1263,19 +1263,19 @@ class ZeekrGearStatusSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть статус коробки передач"""
+        """Return gearbox status"""
         parser = self._get_parser()
         if parser:
             movement = parser.get_movement_info()
             return movement['gear_auto']
         return None
 
-# ==================== GPS И НАВИГАЦИЯ ====================
+# ==================== GPS AND NAVIGATION ====================
 
 class ZeekrGpsStatusSensor(ZeekrBaseSensor):
-    """Статус GPS сигнала"""
+    """GPS signal status"""
 
-    _attr_name = "GPS статус"
+    _attr_name = "GPS Status"
     _attr_icon = "mdi:satellite-variant"
 
     def _get_sensor_type(self) -> str:
@@ -1283,7 +1283,7 @@ class ZeekrGpsStatusSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть статус GPS"""
+        """Return GPS status"""
         parser = self._get_parser()
         if parser:
             gps = parser.get_gps_status()
@@ -1292,26 +1292,26 @@ class ZeekrGpsStatusSensor(ZeekrBaseSensor):
 
     @property
     def extra_state_attributes(self) -> Dict[str, Any]:
-        """Дополнительная информация"""
+        """Additional details"""
         parser = self._get_parser()
         if parser:
             gps = parser.get_gps_status()
             return {
-                'Есть_сигнал': gps['has_gps_signal'],
-                'Координаты_достоверны': gps['coordinates_trusted'],
-                'Передача_местоположения': gps['location_upload_enabled'],
-                'Широта': gps['latitude'],
-                'Долгота': gps['longitude'],
+                'has_signal': gps['has_gps_signal'],
+                'coordinates_trusted': gps['coordinates_trusted'],
+                'location_upload_enabled': gps['location_upload_enabled'],
+                'Latitude': gps['latitude'],
+                'Longitude': gps['longitude'],
             }
         return {}
 
 
-# ==================== ОГНИ ====================
+# ==================== LIGHTS ====================
 
 class ZeekrLightsStatusSensor(ZeekrBaseSensor):
-    """Общий статус всех огней"""
+    """Overall light status"""
 
-    _attr_name = "Статус огней"
+    _attr_name = "Lights Status"
     _attr_icon = "mdi:lightbulb-group"
 
     def _get_sensor_type(self) -> str:
@@ -1319,7 +1319,7 @@ class ZeekrLightsStatusSensor(ZeekrBaseSensor):
 
     @property
     def native_value(self) -> str:
-        """Вернуть статус огней"""
+        """Return light status"""
         parser = self._get_parser()
         if parser:
             lights = parser.get_lights_status()
@@ -1328,21 +1328,21 @@ class ZeekrLightsStatusSensor(ZeekrBaseSensor):
 
     @property
     def extra_state_attributes(self) -> Dict[str, Any]:
-        """Дополнительная информация"""
+        """Additional details"""
         parser = self._get_parser()
         if parser:
             lights = parser.get_lights_status()
             return {
-                'Дневные_огни': lights['drl_active'],
-                'Дальний_свет': lights['hi_beam'],
-                'Ближний_свет': lights['lo_beam'],
-                'Стоп_сигналы': lights['stop_lights'],
-                'Ночной_режим': lights['is_night_mode'],
+                'daytime_running_lights': lights['drl_active'],
+                'high_beam': lights['hi_beam'],
+                'low_beam': lights['lo_beam'],
+                'stop_lights': lights['stop_lights'],
+                'night_mode': lights['is_night_mode'],
             }
         return {}
 
 
-# ==================== ФУНКЦИЯ УСТАНОВКИ (В КОНЦЕ!) ====================
+# ==================== SETUP FUNCTION (AT THE END) ====================
 
 async def async_setup_entry(
         hass: HomeAssistant,
@@ -1355,16 +1355,16 @@ async def async_setup_entry(
 
     entities = []
 
-    # Для каждого автомобиля создаем датчики
+    # Create sensors for each vehicle
     for vin in coordinator.data.keys():
         entities.extend([
-            # ==================== ГРУППА 1: СТАТУС И ОХРАНА ====================
+            # ==================== GROUP 1: STATUS AND SECURITY ====================
             ZeekrLastUpdateTimeSensor(coordinator, vin),
             ZeekrBatterySensor(coordinator, vin),
             ZeekrTheftProtectionSensor(coordinator, vin),
             ZeekrElectricParkBrakeStatusSensor(coordinator, vin),
 
-            # ==================== ОСНОВНЫЕ ДАТЧИКИ ====================
+            # ==================== CORE SENSORS ====================
             ZeekrAuxBatteryPercentageSensor(coordinator, vin),
             ZeekrAuxBatteryVoltageSensor(coordinator, vin),
             ZeekrDistanceToEmptySensor(coordinator, vin),
@@ -1381,62 +1381,62 @@ async def async_setup_entry(
             ZeekrTirePressurePassengerRearSensor(coordinator, vin),
             ZeekrInteriorPM25Sensor(coordinator, vin),
 
-            # ==================== РАСШИРЕННЫЕ ДАТЧИКИ ====================
-            # 🔋 Батарея (расширено)
+            # ==================== EXTENDED SENSORS ====================
+            # 🔋 Battery (extended)
             ZeekrHVTempLevelSensor(coordinator, vin),
             ZeekrTimeToFullChargeSensor(coordinator, vin),
 
-            # 🌡️ Температура шин
+            # 🌡️ Tire temperatures
             ZeekrTireTempDriverSensor(coordinator, vin),
             ZeekrTireTempPassengerSensor(coordinator, vin),
             ZeekrTireTempDriverRearSensor(coordinator, vin),
             ZeekrTireTempPassengerRearSensor(coordinator, vin),
 
-            # 🚙 Движение
+            # 🚙 Movement
             ZeekrTripMeter1Sensor(coordinator, vin),
             ZeekrTripMeter2Sensor(coordinator, vin),
 
-            # 🔧 Обслуживание
+            # 🔧 Maintenance
             ZeekrEngineHoursToServiceSensor(coordinator, vin),
             ZeekrBrakeFluidLevelSensor(coordinator, vin),
             ZeekrWasherFluidLevelSensor(coordinator, vin),
             ZeekrEngineCoolantLevelSensor(coordinator, vin),
 
-            # 💨 Воздух
+            # 💨 Air quality
             ZeekrExteriorPM25LevelSensor(coordinator, vin),
 
-            # 🅿️ Парковка
+            # 🅿️ Parking
             ZeekrParkDurationSensor(coordinator, vin),
 
-            # 🎯 Климат
+            # 🎯 Climate
             ZeekrSteeringWheelHeatingStatusSensor(coordinator, vin),
             ZeekrDriverHeatingStatusSensor(coordinator, vin),
             ZeekrPassengerHeatingStatusSensor(coordinator, vin),
 
-            # 📍 Координаты
+            # 📍 Coordinates
             ZeekrLatitudeSensor(coordinator, vin),
             ZeekrLongitudeSensor(coordinator, vin),
             ZeekrAltitudeSensor(coordinator, vin),
 
-            # 🔐 Информация
+            # 🔐 Information
             ZeekrPropulsionTypeSensor(coordinator, vin),
 
-            # ⚡ Зарядка
+            # ⚡ Charging
             ZeekrDCChargePowerSensor(coordinator, vin),
             ZeekrDCChargeVoltageExtendedSensor(coordinator, vin),
             ZeekrDCChargeCurrentExtendedSensor(coordinator, vin),
             ZeekrDCChargeStatusDetailedSensor(coordinator, vin),
             ZeekrDCDCStatusSensor(coordinator, vin),
 
-            # ⚡ РАЗРЯДКА V2L/V2H
+            # ⚡ V2L/V2H DISCHARGE
             ZeekrDischargePowerSensor(coordinator, vin),
             ZeekrDischargeVoltageSensor(coordinator, vin),
             ZeekrDischargeCurrentSensor(coordinator, vin),
             ZeekrChargerStateSensor(coordinator, vin),
 
-            # ========== ПАНОРАМНАЯ КРЫША (ИСПРАВЛЕННАЯ) ====================
+            # ========== PANORAMIC ROOF (FIXED) ====================
 
-            # 🚗 ДВИЖЕНИЕ
+            # 🚗 MOVEMENT
             ZeekrBrakeStatusSensor(coordinator, vin),
             ZeekrEnergyRecoverySensor(coordinator, vin),
             ZeekrGearStatusSensor(coordinator, vin),
@@ -1444,7 +1444,7 @@ async def async_setup_entry(
             # 📡 GPS
             ZeekrGpsStatusSensor(coordinator, vin),
 
-            # 💡 ОГНИ
+            # 💡 LIGHTS
             ZeekrLightsStatusSensor(coordinator, vin),
         ])
 

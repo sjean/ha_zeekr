@@ -1,5 +1,5 @@
-Рабочий вариант!
+Working version!
 
-1. Авторизация
-2. Сохранения Tokens
-3. Получение статуса авто# ha_zeekr
+1. Authentication
+2. Token storage
+3. Vehicle status retrieval

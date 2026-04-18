@@ -30,15 +30,15 @@ async def async_setup_entry(
 
     entities = []
 
-    # 🎯 ВСЕГДА добавляем глобальную кнопку
+    # Always add the global refresh button
     entities.append(ZeekrRefreshButton(coordinator))
 
-    # 🎯 Добавляем кнопку для каждой машины
+    # Add one refresh button for each vehicle
     for vin in coordinator.data.keys():
-        if vin:  # Проверяем что VIN не пустой
+        if vin:  # Skip empty VIN values
             entities.append(ZeekrRefreshVehicleButton(coordinator, vin))
 
-    # 🎯 ОДНОРАЗОВО добавляем все сущности
+    # Add all entities in one batch
     async_add_entities(entities)
     _LOGGER.info(f"✅ Added {len(entities)} buttons")
 
@@ -56,10 +56,10 @@ class ZeekrRefreshButton(CoordinatorEntity, ButtonEntity):
         super().__init__(coordinator)
         self.coordinator = coordinator
 
-        # Уникальный ID
+        # Unique ID
         self._attr_unique_id = f"{DOMAIN}_refresh_all"
 
-        # Это общее устройство, не привязано к конкретной машине
+        # This is a shared device, not tied to a specific vehicle
         self._attr_device_info = {
             "identifiers": {(DOMAIN, "global")},
             "name": "Zeekr",
@@ -68,14 +68,14 @@ class ZeekrRefreshButton(CoordinatorEntity, ButtonEntity):
         }
 
     async def async_press(self) -> None:
-        """Вызывается когда пользователь нажимает на кнопку"""
-        _LOGGER.info("🔄 [REFRESH] Принудительное обновление всех автомобилей...")
+        """Handle a button press from the user."""
+        _LOGGER.info("🔄 [REFRESH] Force-refreshing all vehicles...")
 
         try:
             await self.coordinator.async_refresh()
-            _LOGGER.info("✅ [REFRESH] Обновление завершено успешно!")
+            _LOGGER.info("✅ [REFRESH] Refresh completed successfully!")
         except Exception as e:
-            _LOGGER.error(f"❌ [REFRESH] Ошибка при обновлении: {e}")
+            _LOGGER.error(f"❌ [REFRESH] Refresh failed: {e}")
             raise
 
 
@@ -93,10 +93,10 @@ class ZeekrRefreshVehicleButton(CoordinatorEntity, ButtonEntity):
         self.coordinator = coordinator
         self.vin = vin
 
-        # Уникальный ID
+        # Unique ID
         self._attr_unique_id = f"{DOMAIN}_{vin}_refresh"
 
-        # Привязываем к устройству конкретной машины
+        # Tie this button to the specific vehicle device
         self._attr_device_info = {
             "identifiers": {(DOMAIN, vin)},
             "name": f"Zeekr {vin}",
@@ -105,14 +105,14 @@ class ZeekrRefreshVehicleButton(CoordinatorEntity, ButtonEntity):
         }
 
     async def async_press(self) -> None:
-        """Вызывается когда пользователь нажимает на кнопку"""
-        _LOGGER.info(f"🔄 [REFRESH] Принудительное обновление для {self.vin}...")
+        """Handle a button press from the user."""
+        _LOGGER.info(f"🔄 [REFRESH] Force-refreshing {self.vin}...")
 
         try:
             await self.coordinator.async_refresh()
-            _LOGGER.info(f"✅ [REFRESH] Обновление для {self.vin} завершено!")
+            _LOGGER.info(f"✅ [REFRESH] Refresh for {self.vin} completed!")
         except Exception as e:
-            _LOGGER.error(f"❌ [REFRESH] Ошибка при обновлении {self.vin}: {e}")
+            _LOGGER.error(f"❌ [REFRESH] Refresh failed for {self.vin}: {e}")
             raise
 
     @callback
