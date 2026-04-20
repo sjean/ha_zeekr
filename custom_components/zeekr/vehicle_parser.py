@@ -2,7 +2,7 @@
 
 """
 Vehicle data parser - extract and format information
-ОБНОВЛЕНО: Правильная интерпретация панораmной крыши (затеmняющей шторки)
+UPDATED: Correct interpretation of the panoramic roof shade.
 """
 from typing import Dict, Any, Optional
 from datetime import datetime
@@ -170,8 +170,8 @@ class VehicleDataParser:
             '0': 'Not connected',
             '1': 'Connected (waiting)',
             '2': 'Pre-charge',
-            '3': 'Заряdка завершена',
-            '4': 'Заряdка завершена',
+            '3': 'Charging complete',
+            '4': 'Charging complete',
             '5': 'Paused',
         }
         return status_map.get(str(status_code), 'Unknown')
@@ -267,7 +267,7 @@ class VehicleDataParser:
         status_map = {
             '0': 'Off',
             '1': 'On',
-            '2': 'Ошибка',
+            '2': 'Error',
         }
         return status_map.get(str(status_code), 'Unknown')
 
@@ -335,12 +335,12 @@ class VehicleDataParser:
             'roof_sealed': True,  # ✅ The roof panel is always sealed and does not leak!
 
             # === FRONT SHADE ===
-            'front_shade_open': sunroof_open,  # Шторка открыта?
+            'front_shade_open': sunroof_open,  # Is the shade open?
             'front_shade_status': self._parse_sunroof_shade(sunroof_open, sunroof_pos),  # Description
             'front_shade_position': sunroof_pos,  # 0-101% (0=dark, 101=transparent)
 
             # === REAR SHADE ===
-            'rear_shade_open': rear_curtain_open,  # Шторка открыта?
+            'rear_shade_open': rear_curtain_open,  # Is the shade open?
             'rear_shade_status': self._parse_sunroof_shade(rear_curtain_open, rear_curtain_pos),  # Description
             'rear_shade_position': rear_curtain_pos,  # 0-101% (0=dark, 101=transparent)
 
@@ -410,8 +410,8 @@ class VehicleDataParser:
             'panoramic_roof_sealed': True,  # Roof is sealed
             'front_shade_open': bool(int(climate.get('sunroofOpenStatus', 0))),
             'front_shade_position': int(climate.get('sunroofPos', 0)),
-            'rear_shade_open': bool(int(climate.get('curtainOpenStatus', 0))),  # ← ИСПРАВЛЕНО!
-            'rear_shade_position': int(climate.get('curtainPos', 0)),  # ← ИСПРАВЛЕНО!
+            'rear_shade_open': bool(int(climate.get('curtainOpenStatus', 0))),  # Fixed mapping
+            'rear_shade_position': int(climate.get('curtainPos', 0)),  # Fixed mapping
 
             # === VENTILATION ===
             'air_blower_active': climate.get('airBlowerActive', 'false') == 'true',
@@ -633,7 +633,7 @@ class VehicleDataParser:
         if interior_pm25 > 300:
             alerts.append(f"🚨 CRITICAL: PM2.5 = {interior_pm25} µg/m³ (normal < 35)")
         elif interior_pm25 > 100:
-            alerts.append(f"⚠️ VERY POOR: PM2.5 = {interior_pm25} mкг/m³")
+            alerts.append(f"⚠️ VERY POOR: PM2.5 = {interior_pm25} µg/m³")
 
         if interior_level == 5:
             alerts.append("🔴 Pollution level: VERY POOR")
@@ -718,7 +718,7 @@ class VehicleDataParser:
                 'total_seconds': total_seconds,
             }
         except Exception as e:
-            print(f"[ERROR] Ошибка при расhете вреmени парковки: {e}")
+            print(f"[ERROR] Failed to calculate parking time: {e}")
             return {
                 'is_parked': False,
                 'parked_since': None,
@@ -770,7 +770,7 @@ class VehicleDataParser:
         status_map = {
             '0': 'Not connected',
             '1': 'Connected',
-            '2': 'Ошибка',
+            '2': 'Error',
         }
         return status_map.get(str(status_code), 'Unknown')
 
@@ -825,9 +825,9 @@ class VehicleDataParser:
         val_str = str(ahbc_val).strip()
 
         if val_str == '0':
-            return "Enabled"  # Знаhение 0
+            return "Enabled"  # Value 0
         elif val_str == '1':
-            return "Disabled"  # Знаhение 1
+            return "Disabled"  # Value 1
 
         # If the value is unexpected (not 0 or 1), expose it
         return f"Unknown (value: {val_str})"

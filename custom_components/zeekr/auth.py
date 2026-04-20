@@ -1,7 +1,5 @@
 # auth.py
-"""
-Аутентификация в Zeekr API
-"""
+"""Authentication for the Zeekr API."""
 import hmac
 import base64
 import requests
@@ -9,14 +7,16 @@ import json
 import uuid
 import hashlib
 import random
-from typing import Optional, Dict, Tuple
+import copy
+from typing import Callable, Optional, Dict, Tuple
 from datetime import datetime
 from .zeekr_config import (
     BASE_URL_TOC, X_CA_SECRET, X_CA_KEY, APP_VERSION,
     PHONE_MODEL, PHONE_VERSION, APP_TYPE, REQUEST_TIMEOUT,
-    REGION_CODE, BASE_URL_SECURE, HMAC_SECRET
+    REGION_CODE, BASE_URL_SECURE, BASE_URL_REMOTE_CONTROL_AUTH, HMAC_SECRET
 )
 from .zeekr_storage import token_storage
+from .remote_control_api import ZeekrRemoteControlAPI, EXTENDED_SIGNED_HEADERS
 
 
 class ZeekrAuth:
@@ -27,6 +27,7 @@ class ZeekrAuth:
         self.base_url = BASE_URL_TOC
         self.session = requests.Session()
         self.mobile = None  # Persist the mobile number
+        self.jwt_token = None  # Persist the JWT token used by the remote-control gateway
 
     def _generate_signature(self, timestamp: str, nonce: int) -> str:
         """
@@ -169,12 +170,14 @@ class ZeekrAuth:
             data = response.json()
 
             if data.get('code') == '000000':
+                jwt_token = data.get('data', {}).get('jwtToken')
                 tokens = {
-                    'jwtToken': data.get('data', {}).get('jwtToken'),
+                    'jwtToken': jwt_token,
                     'mobile': mobile,
                     'device_id': self.device_id,
                 }
                 self.mobile = mobile  # Persist the mobile number
+                self.jwt_token = jwt_token
                 print("✅ Authentication successful!")
                 return True, tokens
             else:
@@ -330,7 +333,7 @@ class ZeekrAuth:
         }
 
         try:
-            # Построиm URL с параmетраmи
+            # Build the URL with query parameters
             full_url = f"{url}?{query_string}"
 
             print(f"[DEBUG] Full URL: {full_url}")
@@ -338,7 +341,7 @@ class ZeekrAuth:
 
             response = self.session.post(
                 full_url,
-                data=body,  # Используеm data вmесто json dля контроля наd JSON
+                data=body,  # Use raw data instead of json for full payload control
                 headers=headers,
                 timeout=REQUEST_TIMEOUT
             )
@@ -346,12 +349,12 @@ class ZeekrAuth:
             print(f"[DEBUG] Response status: {response.status_code}")
 
             data = response.json()
-            print(f"[DEBUG] Ответ от auth/account/session/secure: {json.dumps(data, indent=2, ensure_ascii=False)}")
+            print(f"[DEBUG] Response from auth/account/session/secure: {json.dumps(data, indent=2, ensure_ascii=False)}")
 
             if data.get('code') == 1000 or str(data.get('code')) == '1000':
                 session_data = data.get('data', {})
                 tokens = {
-                    'jwtToken': '',  # Буdет dобавлено ниже
+                    'jwtToken': self.jwt_token or '',
                     'accessToken': session_data.get('accessToken'),
                     'refreshToken': session_data.get('refreshToken'),
                     'userId': session_data.get('userId'),
@@ -359,13 +362,116 @@ class ZeekrAuth:
                     'mobile': self.mobile if self.mobile else '',
                     'device_id': self.device_id,
                 }
-                print("✅ Авторизация с Auth Code успешна!")
+                print("✅ Auth Code authentication successful!")
                 return True, tokens
             else:
                 error_msg = data.get('message', 'Unknown error')
-                print(f"❌ Ошибка авторизации с Auth Code: {error_msg}")
+                print(f"❌ Auth Code authentication failed: {error_msg}")
                 return False, None
 
         except requests.exceptions.RequestException as e:
             print(f"❌ Request error: {e}")
             return False, None
+
+    def exchange_gateway_token(
+        self,
+        auth_code: str,
+        vehicle_identifier: str,
+        vehicle_series: str,
+        debug_callback: Optional[Callable[[Dict[str, object]], None]] = None,
+    ) -> Tuple[bool, Optional[Dict]]:
+        """
+        Exchange an auth code for the Geely gateway token used by remote-control APIs.
+
+        The official Android app calls:
+        POST https://gric-api.geely.com/ms-midground-user/api/v1.0/user/auth/get/token
+        with body {"authCode":"...","identityType":"1"} before issuing remote-control requests.
+        """
+        print("\n🔐 Exchanging auth code for remote-control gateway token...")
+
+        path = "/ms-midground-user/api/v1.0/user/auth/get/token"
+        url = f"{BASE_URL_REMOTE_CONTROL_AUTH}{path}"
+        payload = {
+            "authCode": auth_code,
+            "identityType": "1",
+        }
+        body = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+
+        signer = ZeekrRemoteControlAPI(
+            device_id=self.device_id,
+            access_token="",
+            remote_control_vehicles={},
+            jwt_token="",
+        )
+        vehicle_metadata = {
+            "vehicle_identifier": vehicle_identifier,
+            "vehicle_series": vehicle_series,
+        }
+
+        last_error = None
+        for variant in signer._signature_variants():
+            timestamp = str(int(datetime.now().timestamp() * 1000))
+            nonce = str(uuid.uuid4())
+            headers = signer._get_headers(
+                path,
+                timestamp,
+                nonce,
+                body,
+                vehicle_metadata,
+                signed_headers=variant["signed_headers"],
+                include_body_md5=bool(variant["include_body_md5"]),
+                canonicalize_body_for_md5=bool(
+                    variant["canonicalize_body_for_md5"]
+                ),
+                include_bearer=False,
+            )
+            try:
+                response = self.session.post(
+                    url,
+                    data=body,
+                    headers=headers,
+                    timeout=REQUEST_TIMEOUT,
+                )
+                data = response.json()
+            except requests.exceptions.RequestException as e:
+                print(f"❌ Gateway token request error: {e}")
+                return False, None
+
+            if str(data.get("code")) == "0":
+                token_data = data.get("data", {})
+                gateway_token = (
+                    token_data.get("accessToken")
+                    or token_data.get("token")
+                    or token_data.get("authorization")
+                )
+                if not gateway_token:
+                    print("❌ Gateway token response did not contain a usable token.")
+                    return False, token_data
+
+                result = {
+                    "gatewayAccessToken": gateway_token,
+                    "raw": token_data,
+                    "signatureVariant": variant["name"],
+                }
+                print(
+                    f"✅ Gateway token exchange succeeded with {variant['name']}!"
+                )
+                return True, result
+
+            last_error = data
+            if signer.last_request_debug is not None:
+                signer.last_request_debug["variant_name"] = str(variant["name"])
+                signer.last_request_debug["response_json"] = copy.deepcopy(data)
+                if debug_callback is not None:
+                    debug_callback(copy.deepcopy(signer.last_request_debug))
+            if str(data.get("code")) != "00A06":
+                print(f"❌ Gateway token exchange failed: {data}")
+                return False, data
+
+            print(
+                "⚠️ Gateway token signature variant "
+                f"{variant['name']} failed: {data}"
+            )
+
+        print(f"❌ Gateway token exchange failed after trying all variants: {last_error}")
+        return False, last_error

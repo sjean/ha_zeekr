@@ -38,9 +38,11 @@ class TokenStorage:
             tokens: Dictionary with keys:
                    - accessToken: Access token for the SECURE API
                    - refreshToken: Refresh token
+                   - jwtToken: JWT token used by the remote-control gateway
                    - userId: User ID
                    - clientId: Client ID
                    - device_id: Device ID
+                   - remote_control_vehicles: VIN -> remote-control metadata map
         """
         try:
             if _LOGGER:

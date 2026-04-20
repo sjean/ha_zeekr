@@ -135,12 +135,12 @@ class ZeekrAPI:
             'x-signature': signature,
         }
 
-    def get_vehicles(self) -> Tuple[bool, Optional[List[str]]]:
+    def get_vehicle_entries(self) -> Tuple[bool, Optional[List[Dict]]]:
         """
-        Fetch the list of vehicle VINs for the user.
+        Fetch the raw vehicle list payload for the current user.
 
         Returns:
-            Tuple of (success, VIN list or None)
+            Tuple of (success, vehicle entry list or None)
         """
         print("\n🚗 Fetching the vehicle list...")
 
@@ -153,9 +153,7 @@ class ZeekrAPI:
             'needSharedCar': '1'
         }
 
-        # Sort parameters and build the query string
         query_string = urlencode(sorted(params.items()))
-
         url = f"{self.base_url}{path}?{query_string}"
 
         try:
@@ -168,17 +166,32 @@ class ZeekrAPI:
             data = response.json()
 
             if data.get('code') == '1000':
-                vehicles = [v['vin'] for v in data.get('data', {}).get('list', [])]
-                print(f"✅ Found {len(vehicles)} vehicles: {vehicles}")
+                vehicles = data.get('data', {}).get('list', [])
+                print(f"✅ Found {len(vehicles)} vehicles")
                 return True, vehicles
-            else:
-                error_msg = data.get('message', 'Unknown error')
-                print(f"❌ Failed to fetch vehicles: {error_msg}")
-                return False, None
+
+            error_msg = data.get('message', 'Unknown error')
+            print(f"❌ Failed to fetch vehicles: {error_msg}")
+            return False, None
 
         except requests.exceptions.RequestException as e:
             print(f"❌ Request error: {e}")
             return False, None
+
+    def get_vehicles(self) -> Tuple[bool, Optional[List[str]]]:
+        """
+        Fetch the list of vehicle VINs for the user.
+
+        Returns:
+            Tuple of (success, VIN list or None)
+        """
+        success, vehicles = self.get_vehicle_entries()
+        if not success or vehicles is None:
+            return False, None
+
+        vins = [vehicle.get('vin') for vehicle in vehicles if vehicle.get('vin')]
+        print(f"✅ Vehicle VINs: {vins}")
+        return True, vins
 
     def get_vehicle_status(self, vin: str) -> Tuple[bool, Optional[Dict]]:
         """

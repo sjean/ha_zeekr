@@ -7,6 +7,8 @@ VERSION = "1.0.0"
 
 CONF_MOBILE = "mobile"
 CONF_SMS_CODE = "sms_code"
+CONF_JWT_TOKEN = "jwtToken"
+CONF_REMOTE_CONTROL_VEHICLES = "remote_control_vehicles"
 
 DEFAULT_SCAN_INTERVAL = 300  # 5 minutes
 

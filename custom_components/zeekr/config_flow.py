@@ -12,7 +12,13 @@ from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 
-from .const import DOMAIN, CONF_MOBILE, CONF_SMS_CODE
+from .const import (
+    DOMAIN,
+    CONF_MOBILE,
+    CONF_SMS_CODE,
+    CONF_JWT_TOKEN,
+    CONF_REMOTE_CONTROL_VEHICLES,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -160,11 +166,16 @@ class ZeekrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     data={
                         "mobile": mobile,
                         # Save tokens in the config entry
+                        CONF_JWT_TOKEN: secure_tokens.get("jwtToken"),
                         "accessToken": secure_tokens.get("accessToken"),
                         "refreshToken": secure_tokens.get("refreshToken"),
                         "userId": secure_tokens.get("userId"),
                         "clientId": secure_tokens.get("clientId"),
                         "device_id": secure_tokens.get("device_id"),
+                        CONF_REMOTE_CONTROL_VEHICLES: secure_tokens.get(
+                            CONF_REMOTE_CONTROL_VEHICLES,
+                            {},
+                        ),
                     },
                 )
 

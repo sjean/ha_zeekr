@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-04-18T16:25:24",
+  "target_url": "https://gric-zhf-api.geely.com/ms-remote-control/api/v1.0/remoteControl/control",
+  "source": {
+    "watch": true,
+    "serial": "3B15AM004KA00000",
+    "label": "sample1"
+  },
+  "request": {
+    "headers": {
+      "accept": "application/json; charset=UTF-8",
+      "accept-language": "zh_CN",
+      "authorization": "eyJraWQiOiJmNDgzZmI2ZGM3MTc0ZTEwYmQ0ZWM4NTk2NWE3ZjI4ZCIsInR5cCI6IkpXVCIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIxNTgyNzM2NTY3NjU2NTgzMTY4Iiwib3BlbklkIjoiMTU4MjczNjU2NzY1NjU4MzE2OCIsImlzcyI6Imh0dHBzOi8vZ3JpYy1taWQtaW5uZXIuZ2VlbHkuY29tL21zLWF1dGgtc2VydmljZS9pbm5lci92MS4wL29hdXRoL2luZm8iLCJ0eXAiOiJCZWFyZXIiLCJlbnYiOiJQUk9EIiwidXNlcklkIjoiMTAzMTMzMzIyIiwiZGV2aWNlSWQiOiI3NzEyOTJkYi1kMDliLTQ5MTctOTgzYS02ZTUyNjFhNjI2ZjUiLCJzaWQiOiIwZWE3NzcxOC1mZTc1LTRhZGMtYTBkNy05ODc3NDk1YTlkNDkiLCJhdWQiOiJhdXRoX2NsaWVudF96ZWVrcl9waG9uZSIsImFjciI6IjEiLCJuYmYiOjE3NzY0OTYzMDQsImF6cCI6ImF1dGhfY2xpZW50X3plZWtyX3Bob25lIiwic2NvcGUiOiIiLCJleHAiOjE3NzcxMDExMDQsInNlc3Npb25fc3RhdGUiOiIwZWE3NzcxOC1mZTc1LTRhZGMtYTBkNy05ODc3NDk1YTlkNDkiLCJpYXQiOjE3NzY0OTYzMDQsImJyYW5kIjoiWkVFS1IiLCJqdGkiOiJkMGU4YjQ2MS04MGNiLTQ1Y2ItYTllYS01MTRkMmFkMWM3NjYifQ.mxTsQ_gPX8aVYeHlVudV5tcF4vJMwKNORHV68PtC5YXzJCBn686tTP-11c5bqgEMF7XoVRFZdNDgqz6d0PpmppgukItjY8-Kfu8t0sbFgYp9vkYUrU4uV4PvCwWAJXNXSfpxpICl8munGcnpnEsc02uUcEYZz3Osb3XTTxH6rarYdTM3ULmBwCg-uwGBAr-HV71nhMPItx4zzVsYKYsdoi3LHQFB5ofYrGlz_4Aa7HrPpanMsW0E1JakHF9MrrYBTe-2YjR3Gr8aEr_rgDKoqNKbYmW2K8hnCXkuKeq2LCqO4p3YdCLeiYGWqx4rsvGqEXq9akLk4brWSEYFiRDNCA",
+      "content-type": "application/json; charset=UTF-8",
+      "x-api-signature-nonce": "42e135d5-e69b-4953-967b-47a31371e196",
+      "x-api-signature-version": "2.1",
+      "x-app-id": "GEELYCNCH001M0001",
+      "x-app-version": "v1.0.0",
+      "x-device-brand": "ONEPLUS",
+      "x-device-id": "771292db-d09b-4917-983a-6e5261a626f5",
+      "x-device-model": "PLK110",
+      "x-device-os-version": "Android 16 (API 36)",
+      "x-platform": "Android",
+      "x-sales-platform": "ZEEKR",
+      "x-signature": "bdmXv9XGrIC119yFb+yLKepuKR5qSlqMeMSPaA0hAbo=",
+      "x-tenant-id": "ZEEKR",
+      "x-timestamp": "1776500723247",
+      "x-tsp-platform": "4",
+      "x-vehicle-brand": "ZEEKR",
+      "x-vehicle-identifier": "hpH7FDmHeL+LAK3KvT6UTq3A5aW3sOjEv3u7Y3HFtto=",
+      "x-vehicle-series": "REMxRQ=="
+    },
+    "body": "{\"command\":\"\",\"serviceId\":\"RHL\",\"setting\":{\"serviceParameters\":[{\"key\":\"rhl\",\"value\":\"light-flash\"}]}}",
+    "header_order": [
+      "accept",
+      "accept-language",
+      "authorization",
+      "content-type",
+      "x-api-signature-nonce",
+      "x-api-signature-version",
+      "x-app-id",
+      "x-app-version",
+      "x-device-brand",
+      "x-device-id",
+      "x-device-model",
+      "x-device-os-version",
+      "x-platform",
+      "x-sales-platform",
+      "x-signature",
+      "x-tenant-id",
+      "x-timestamp",
+      "x-tsp-platform",
+      "x-vehicle-brand",
+      "x-vehicle-identifier",
+      "x-vehicle-series"
+    ],
+    "response_status": null,
+    "response_json": null
+  }
+}
