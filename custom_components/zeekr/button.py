@@ -46,7 +46,7 @@ async def async_setup_entry(
 class ZeekrRefreshButton(CoordinatorEntity, ButtonEntity):
     """Global refresh button for all vehicles"""
 
-    _attr_name = "Refresh All Vehicles"
+    _attr_name = "刷新全部车辆"
     _attr_icon = "mdi:refresh"
     _attr_device_class = ButtonDeviceClass.RESTART
     _attr_has_entity_name = False
@@ -85,7 +85,7 @@ class ZeekrRefreshVehicleButton(CoordinatorEntity, ButtonEntity):
     _attr_icon = "mdi:refresh"
     _attr_device_class = ButtonDeviceClass.RESTART
     _attr_has_entity_name = True
-    _attr_name = "Refresh"
+    _attr_name = "刷新"
 
     def __init__(self, coordinator: ZeekrDataCoordinator, vin: str):
         """Initialize button"""

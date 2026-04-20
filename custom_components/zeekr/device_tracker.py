@@ -42,7 +42,7 @@ class ZeekrDeviceTracker(CoordinatorEntity, TrackerEntity):
     """Zeekr device tracker for vehicle location"""
 
     _attr_has_entity_name = True
-    _attr_name = "Location"
+    _attr_name = "位置"
     _attr_icon = "mdi:map-marker"
     _attr_source_type = SourceType.GPS
 
@@ -94,8 +94,8 @@ class ZeekrDeviceTracker(CoordinatorEntity, TrackerEntity):
         if parser:
             position = parser.get_position_info()
             return {
-                "altitude": position['altitude'],
-                "direction": position['direction'],
+                "海拔": position['altitude'],
+                "方向": position['direction'],
             }
         return {}
 

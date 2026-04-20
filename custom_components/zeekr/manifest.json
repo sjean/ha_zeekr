@@ -1,6 +1,6 @@
 {
   "domain": "zeekr",
-  "name": "Zeekr Vehicle Integration",
+  "name": "Zeekr Vehicle",
   "codeowners": ["@Potia"],
   "config_flow": true,
   "documentation": "https://github.com/Potia/ha_zeekr",

@@ -2,32 +2,32 @@
   "config": {
     "step": {
       "user": {
-        "title": "Zeekr Configuration",
-        "description": "Enter your mobile number",
+        "title": "极氪配置",
+        "description": "请输入手机号",
         "data": {
-          "mobile": "Mobile Number (e.g., 13812345678)"
+          "mobile": "手机号（例如：13812345678）"
         }
       },
       "sms_code": {
-        "title": "SMS Code",
-        "description": "Enter the SMS code",
+        "title": "短信验证码",
+        "description": "请输入短信验证码",
         "data": {
-          "sms_code": "SMS Code"
+          "sms_code": "短信验证码"
         }
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect",
-      "invalid_auth": "Invalid SMS code",
-      "cannot_send_sms": "Failed to send SMS",
-      "cannot_get_auth_code": "Failed to get auth code",
-      "cannot_get_secure_tokens": "Failed to get tokens",
-      "invalid_phone": "Invalid phone number",
-      "invalid_code": "Invalid code",
-      "import_error": "Import error"
+      "cannot_connect": "连接失败",
+      "invalid_auth": "短信验证码无效",
+      "cannot_send_sms": "发送短信失败",
+      "cannot_get_auth_code": "获取授权码失败",
+      "cannot_get_secure_tokens": "获取令牌失败",
+      "invalid_phone": "手机号格式无效",
+      "invalid_code": "验证码无效",
+      "import_error": "导入错误"
     },
     "abort": {
-      "auth_successful": "Authentication successful!"
+      "auth_successful": "认证成功！"
     }
   }
 }

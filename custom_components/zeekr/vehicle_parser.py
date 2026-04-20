@@ -2,7 +2,7 @@
 
 """
 Vehicle data parser - extract and format information
-ОБНОВЛЕНО: Правильная интерпретация панораmной крыши (затеmняющей шторки)
+更新：修正全景天幕遮阳帘状态解析
 """
 from typing import Dict, Any, Optional
 from datetime import datetime
@@ -31,36 +31,36 @@ class VehicleDataParser:
     def _parse_dc_charge_status(self, status_code: str) -> str:
         """Parse the DC charging status"""
         status_map = {
-            '0': '❌ Not active',
-            '1': '⚡ Active (connected)',
-            '2': '🔋 Charging in progress',
-            '3': '✅ Charging complete',
-            '4': '⏸️ Paused',
+            '0': '❌ 未激活',
+            '1': '⚡ 已激活（已连接）',
+            '2': '🔋 充电中',
+            '3': '✅ 充电完成',
+            '4': '⏸️ 已暂停',
         }
-        return status_map.get(str(status_code), f'❓ Unknown ({status_code})')
+        return status_map.get(str(status_code), f'❓ 未知（{status_code}）')
 
     def _parse_dc_dc_status(self, status_code: str) -> str:
         """Parse the DC/DC converter status (400V to 12V)."""
         status_map = {
-            '0': '❌ Disabled',
-            '1': '🔄 Transition',
-            '2': '⚠️ Error',
-            '3': '✅ Enabled and running',
+            '0': '❌ 已关闭',
+            '1': '🔄 切换中',
+            '2': '⚠️ 故障',
+            '3': '✅ 已启用并运行',
         }
-        return status_map.get(str(status_code), f'❓ Unknown ({status_code})')
+        return status_map.get(str(status_code), f'❓ 未知（{status_code}）')
 
     def _parse_charger_state(self, state_code: str) -> str:
         """Parse the charger state"""
         state_map = {
-            '0': '❌ Disconnected',
-            '1': '🔌 Connected (waiting)',
-            '2': '⚡ Pre-charge',
-            '3': '🔋 Main charging',
-            '4': '🔄 Balancing',
-            '5': '✅ Complete',
-            '15': '⚙️ Ready',
+            '0': '❌ 未连接',
+            '1': '🔌 已连接（等待中）',
+            '2': '⚡ 预充中',
+            '3': '🔋 主充电中',
+            '4': '🔄 均衡中',
+            '5': '✅ 已完成',
+            '15': '⚙️ 就绪',
         }
-        return state_map.get(str(state_code), f'⏳ State {state_code}')
+        return state_map.get(str(state_code), f'⏳ 状态 {state_code}')
 
     def __init__(self, raw_data: Dict[str, Any]):
         """Initialize the parser"""
@@ -75,7 +75,7 @@ class VehicleDataParser:
     def get_engine_status(self) -> str:
         """Get the engine status"""
         status = self.data.get('basicVehicleStatus', {}).get('engineStatus', 'unknown')
-        return '✅ Running' if status == 'engine_running' else '❌ Off'
+        return '✅ 运行中' if status == 'engine_running' else '❌ 已关闭'
 
     def get_last_update_time(self) -> str:
         """Get the last update time"""
@@ -88,14 +88,14 @@ class VehicleDataParser:
     def get_propulsion_type(self) -> str:
         """Get the propulsion type (electric, hybrid, etc.)"""
         propulsion_map = {
-            '0': 'Gasoline',
-            '1': 'Diesel',
-            '2': 'Hybrid',
-            '3': 'Plug-in hybrid',
-            '4': 'Electric',
+            '0': '汽油',
+            '1': '柴油',
+            '2': '混动',
+            '3': '插电混动',
+            '4': '纯电',
         }
         prop_type = self.data.get('configuration', {}).get('propulsionType', '0')
-        return propulsion_map.get(str(prop_type), 'Unknown')
+        return propulsion_map.get(str(prop_type), '未知')
 
     def get_is_moving(self) -> bool:
         """Determine whether the vehicle is currently moving"""
@@ -112,14 +112,14 @@ class VehicleDataParser:
         activated = int(theft.get('activated', 0))
 
         status_map = {
-            0: '❌ Disabled',
-            1: '⚠️ Activating',
-            2: '🔒 Enabled (waiting)',
-            3: '🔒 ACTIVE AND RUNNING 🚨',
+            0: '❌ 已禁用',
+            1: '⚠️ 启动中',
+            2: '🔒 已启用（等待中）',
+            3: '🔒 已激活并运行 🚨',
         }
 
         return {
-            'theft_protection': status_map.get(activated, 'Unknown'),
+            'theft_protection': status_map.get(activated, '未知'),
             'theft_activated': activated == 3,
             'engine_locked': bool(int(eg.get('status', 0))),
             'activation_time': int(theft.get('time', 0)),
@@ -157,24 +157,24 @@ class VehicleDataParser:
     def _parse_hv_temp_level(self, level_code: str) -> str:
         """Translate the battery temperature level"""
         temp_map = {
-            '0': 'Warm 🔥',
-            '1': 'Slightly cold ❄️',
-            '2': 'Cold 🥶',
-            '3': 'Very cold 🧊',
+            '0': '温暖 🔥',
+            '1': '略冷 ❄️',
+            '2': '寒冷 🥶',
+            '3': '很冷 🧊',
         }
-        return temp_map.get(str(level_code), 'Unknown')
+        return temp_map.get(str(level_code), '未知')
 
     def _parse_charge_status(self, status_code: str) -> str:
         """Translate the charge status code."""
         status_map = {
-            '0': 'Not connected',
-            '1': 'Connected (waiting)',
-            '2': 'Pre-charge',
-            '3': 'Заряdка завершена',
-            '4': 'Заряdка завершена',
-            '5': 'Paused',
+            '0': '未连接',
+            '1': '已连接（等待中）',
+            '2': '预充中',
+            '3': '充电完成',
+            '4': '充电完成',
+            '5': '已暂停',
         }
-        return status_map.get(str(status_code), 'Unknown')
+        return status_map.get(str(status_code), '未知')
 
     # ==================== TEMPERATURE ====================
 
@@ -221,7 +221,7 @@ class VehicleDataParser:
 
         return {
             'has_gps_signal': has_gps,
-            'gps_status': '✅ GPS active' if has_gps else '❌ GPS lost',
+            'gps_status': '✅ GPS 正常' if has_gps else '❌ GPS 丢失',
             'coordinates_trusted': position.get('posCanBeTrusted') == 'true',
             'location_upload_enabled': position.get('carLocatorStatUploadEn') == 'true',
             'latitude': float(position.get('latitude', 0)) / 1e7 if position.get('latitude') else None,
@@ -256,20 +256,20 @@ class VehicleDataParser:
     def _parse_lock_status(self, status_code: str) -> str:
         """Translate the lock status code"""
         status_map = {
-            '0': 'Unknown',
-            '1': 'Locked',
-            '2': 'Unlocked',
+            '0': '未知',
+            '1': '已锁定',
+            '2': '未锁定',
         }
-        return status_map.get(str(status_code), 'Unknown')
+        return status_map.get(str(status_code), '未知')
 
     def _parse_park_brake(self, status_code: str) -> str:
         """Translate the electronic parking brake status"""
         status_map = {
-            '0': 'Off',
-            '1': 'On',
-            '2': 'Ошибка',
+            '0': '关闭',
+            '1': '开启',
+            '2': '故障',
         }
-        return status_map.get(str(status_code), 'Unknown')
+        return status_map.get(str(status_code), '未知')
 
     # ==================== WINDOWS ====================
 
@@ -289,22 +289,22 @@ class VehicleDataParser:
     def _parse_window_status(self, status_code: str) -> str:
         """Translate the window status code"""
         status_map = {
-            '0': 'Open',
-            '1': 'Opening',
-            '2': 'Closed',
-            '3': 'Closing',
+            '0': '打开',
+            '1': '开启中',
+            '2': '关闭',
+            '3': '关闭中',
         }
-        return status_map.get(str(status_code), 'Unknown')
+        return status_map.get(str(status_code), '未知')
 
     def _parse_window_reminder(self, code: str) -> str:
         """Parse the window-close reminder"""
         map_reminder = {
-            '0': 'No reminder',
-            '1': 'Windows slightly open',
-            '2': 'Windows open',
-            '3': 'Windows should be closed',
+            '0': '无提醒',
+            '1': '车窗微开',
+            '2': '车窗开启',
+            '3': '请关闭车窗',
         }
-        return map_reminder.get(str(code), 'Unknown')
+        return map_reminder.get(str(code), '未知')
 
     # ==================== PANORAMIC ROOF (FULLY FIXED) ====================
 
@@ -335,13 +335,13 @@ class VehicleDataParser:
             'roof_sealed': True,  # ✅ The roof panel is always sealed and does not leak!
 
             # === FRONT SHADE ===
-            'front_shade_open': sunroof_open,  # Шторка открыта?
-            'front_shade_status': self._parse_sunroof_shade(sunroof_open, sunroof_pos),  # Description
+            'front_shade_open': sunroof_open,
+            'front_shade_status': self._parse_sunroof_shade(sunroof_open, sunroof_pos),
             'front_shade_position': sunroof_pos,  # 0-101% (0=dark, 101=transparent)
 
             # === REAR SHADE ===
-            'rear_shade_open': rear_curtain_open,  # Шторка открыта?
-            'rear_shade_status': self._parse_sunroof_shade(rear_curtain_open, rear_curtain_pos),  # Description
+            'rear_shade_open': rear_curtain_open,
+            'rear_shade_status': self._parse_sunroof_shade(rear_curtain_open, rear_curtain_pos),
             'rear_shade_position': rear_curtain_pos,  # 0-101% (0=dark, 101=transparent)
 
             # === CABIN LIGHTING ===
@@ -363,17 +363,17 @@ class VehicleDataParser:
             Text description of the state
         """
         if position >= 100:
-            return '☀️ FULLY TRANSPARENT (maximum light, sky visible)'
+            return '☀️ 完全透光（采光最强，可见天空）'
         elif position >= 75:
-            return '🌞 75% transparent (lots of light)'
+            return '🌞 75% 透光（采光充足）'
         elif position >= 50:
-            return '🌤️ 50% transparent (medium light)'
+            return '🌤️ 50% 透光（采光中等）'
         elif position >= 25:
-            return '🌥️ 25% transparent (some light)'
+            return '🌥️ 25% 透光（少量进光）'
         elif position > 0:
-            return '⚫ Closing (low light)'
+            return '⚫ 关闭中（弱光）'
         else:
-            return '🌙 FULLY DARKENED (sky not visible)'
+            return '🌙 完全遮光（不可见天空）'
 
     def _get_roof_description(self, front_open: bool, front_pos: int, rear_open: bool, rear_pos: int) -> str:
         """
@@ -391,7 +391,7 @@ class VehicleDataParser:
         front_status = self._parse_sunroof_shade(front_open, front_pos)
         rear_status = self._parse_sunroof_shade(rear_open, rear_pos)
 
-        return f"Front: {front_status} | Rear: {rear_status}"
+        return f"前部：{front_status} | 后部：{rear_status}"
 
     # ==================== CLIMATE ====================
 
@@ -410,8 +410,8 @@ class VehicleDataParser:
             'panoramic_roof_sealed': True,  # Roof is sealed
             'front_shade_open': bool(int(climate.get('sunroofOpenStatus', 0))),
             'front_shade_position': int(climate.get('sunroofPos', 0)),
-            'rear_shade_open': bool(int(climate.get('curtainOpenStatus', 0))),  # ← ИСПРАВЛЕНО!
-            'rear_shade_position': int(climate.get('curtainPos', 0)),  # ← ИСПРАВЛЕНО!
+            'rear_shade_open': bool(int(climate.get('curtainOpenStatus', 0))),
+            'rear_shade_position': int(climate.get('curtainPos', 0)),
 
             # === VENTILATION ===
             'air_blower_active': climate.get('airBlowerActive', 'false') == 'true',
@@ -421,12 +421,12 @@ class VehicleDataParser:
     def _parse_heating_status(self, status_code: str) -> str:
         """Parse the heating status"""
         status_map = {
-            '0': 'Off',
-            '1': 'Level 1',
-            '2': 'Level 2',
-            '3': 'Level 3',
+            '0': '关闭',
+            '1': '1 档',
+            '2': '2 档',
+            '3': '3 档',
         }
-        return status_map.get(str(status_code), 'Unknown')
+        return status_map.get(str(status_code), '未知')
 
     # ==================== TIRES ====================
 
@@ -467,12 +467,12 @@ class VehicleDataParser:
         Parse fluid levels (brake, coolant).
         """
         level_map = {
-            '0': 'Full 🟢',
-            '1': 'Good 🟢',
-            '2': 'Normal 🟢',
-            '3': 'Full 🟢',
+            '0': '满 🟢',
+            '1': '良好 🟢',
+            '2': '正常 🟢',
+            '3': '满 🟢',
         }
-        return level_map.get(str(level_code), f'Level {level_code}')
+        return level_map.get(str(level_code), f'等级 {level_code}')
 
     def _parse_washer_fluid_level(self, level_code: str) -> str:
         """
@@ -480,10 +480,10 @@ class VehicleDataParser:
         (Zeekr may use inverted logic)
         """
         level_map = {
-            '0': 'Full ✅',
-            '1': 'Low 🔴',
+            '0': '满 ✅',
+            '1': '低 🔴',
         }
-        return level_map.get(str(level_code), f'Level {level_code}')
+        return level_map.get(str(level_code), f'等级 {level_code}')
 
     # ==================== SPEED AND MOVEMENT ====================
 
@@ -523,17 +523,17 @@ class VehicleDataParser:
 
     def _parse_speed_validity(self, validity: str) -> str:
         """Parse speed validity"""
-        return '✅ Valid' if validity == 'true' else '⚠️ Invalid'
+        return '✅ 有效' if validity == 'true' else '⚠️ 无效'
 
     def _parse_gear_status(self, gear_code: str) -> str:
         """Parse gearbox status"""
         gear_map = {
-            '0': '❌ Disabled',
-            '1': '✅ Automatic engaged',
-            '2': '🔧 Manual engaged',
-            '3': '⏸️ Hold / Neutral mode',
+            '0': '❌ 已禁用',
+            '1': '✅ 自动挡已挂入',
+            '2': '🔧 手动挡已挂入',
+            '3': '⏸️ 保持 / 空挡模式',
         }
-        return gear_map.get(str(gear_code), 'Unknown')
+        return gear_map.get(str(gear_code), '未知')
 
     # ==================== BRAKES ====================
 
@@ -552,10 +552,10 @@ class VehicleDataParser:
     def _parse_stop_light_status(self, status: str) -> str:
         """Parse brake-light status"""
         status_map = {
-            '0': '✅ Off (moving or free-rolling)',
-            '1': '🔴 ON - BRAKING',
+            '0': '✅ 未制动（行驶或滑行）',
+            '1': '🔴 制动中',
         }
-        return status_map.get(str(status), 'Unknown')
+        return status_map.get(str(status), '未知')
 
     # ==================== LIGHTS ====================
 
@@ -585,15 +585,15 @@ class VehicleDataParser:
         stop = bool(int(running.get('stopLi', 0)))
 
         if stop:
-            return '🔴 BRAKING'
+            return '🔴 制动中'
         elif hi_beam:
-            return '🔆 High beam'
+            return '🔆 远光灯'
         elif lo_beam:
-            return '💡 Low beam'
+            return '💡 近光灯'
         elif drl:
-            return '☀️ Daytime running lights'
+            return '☀️ 日间行车灯'
         else:
-            return '⚫ Lights off (daytime or parked)'
+            return '⚫ 灯光关闭（白天或驻车）'
 
     # ==================== AIR QUALITY ====================
 
@@ -611,14 +611,14 @@ class VehicleDataParser:
     def _parse_pm25_level(self, level_code: str) -> str:
         """Translate the PM2.5 level"""
         level_map = {
-            '0': 'Excellent 🟢',
-            '1': 'Good 🟢',
-            '2': 'Moderate 🟡',
-            '3': 'Poor 🟠',
-            '4': 'Very poor 🔴',
-            '5': 'Critical 🚨',
+            '0': '优 🟢',
+            '1': '良 🟢',
+            '2': '中 🟡',
+            '3': '差 🟠',
+            '4': '很差 🔴',
+            '5': '严重 🚨',
         }
-        return level_map.get(str(level_code), 'Unknown')
+        return level_map.get(str(level_code), '未知')
 
     def get_air_quality_alert(self) -> Dict[str, Any]:
         """Check air quality (ATTENTION!)"""
@@ -631,15 +631,15 @@ class VehicleDataParser:
         alerts = []
 
         if interior_pm25 > 300:
-            alerts.append(f"🚨 CRITICAL: PM2.5 = {interior_pm25} µg/m³ (normal < 35)")
+            alerts.append(f"🚨 严重：PM2.5 = {interior_pm25} µg/m³（正常应 < 35）")
         elif interior_pm25 > 100:
-            alerts.append(f"⚠️ VERY POOR: PM2.5 = {interior_pm25} mкг/m³")
+            alerts.append(f"⚠️ 很差：PM2.5 = {interior_pm25} µg/m³")
 
         if interior_level == 5:
-            alerts.append("🔴 Pollution level: VERY POOR")
+            alerts.append("🔴 污染等级：很差")
 
         if humidity > 100:
-            alerts.append(f"⚠️ Humidity sensor error: {humidity}% (impossible!)")
+            alerts.append(f"⚠️ 湿度传感器异常：{humidity}%（不合理）")
 
         return {
             'alerts': alerts,
@@ -667,7 +667,7 @@ class VehicleDataParser:
             return {
                 'is_parked': False,
                 'parked_since': None,
-                'park_duration': 'Not parked',
+                'park_duration': '未停车',
                 'total_seconds': 0,
             }
         try:
@@ -677,7 +677,7 @@ class VehicleDataParser:
             return {
                 'is_parked': False,
                 'parked_since': None,
-                'park_duration': 'Not parked',
+                'park_duration': '未停车',
                 'total_seconds': 0,
             }
 
@@ -686,7 +686,7 @@ class VehicleDataParser:
             return {
                 'is_parked': False,
                 'parked_since': None,
-                'park_duration': 'Not parked',
+                'park_duration': '未停车',
                 'total_seconds': 0,
             }
 
@@ -703,11 +703,11 @@ class VehicleDataParser:
 
             # Format a readable duration
             if days > 0:
-                duration_str = f"{days}d {hours}h {minutes}m"
+                duration_str = f"{days}天 {hours}小时 {minutes}分钟"
             elif hours > 0:
-                duration_str = f"{hours}h {minutes}m"
+                duration_str = f"{hours}小时 {minutes}分钟"
             else:
-                duration_str = f"{minutes}m"
+                duration_str = f"{minutes}分钟"
 
             print(f"[DEBUG] Parked {duration_str}")
 
@@ -722,7 +722,7 @@ class VehicleDataParser:
             return {
                 'is_parked': False,
                 'parked_since': None,
-                'park_duration': 'Data error',
+                'park_duration': '数据异常',
                 'total_seconds': 0,
             }
 
@@ -768,11 +768,11 @@ class VehicleDataParser:
     def _parse_charge_connector_status(self, status_code: str) -> str:
         """Parse the charging connector status"""
         status_map = {
-            '0': 'Not connected',
-            '1': 'Connected',
-            '2': 'Ошибка',
+            '0': '未连接',
+            '1': '已连接',
+            '2': '故障',
         }
-        return status_map.get(str(status_code), 'Unknown')
+        return status_map.get(str(status_code), '未知')
 
     def estimate_battery_recovery(self) -> Dict[str, Any]:
         """
@@ -791,7 +791,7 @@ class VehicleDataParser:
             'speed': speed,
             'current_charge': charge_level,
             'is_recovering': is_braking and speed > 0,
-            'recovery_status': '⚡ ENERGY RECOVERY' if (is_braking and speed > 0) else 'No recovery',
+            'recovery_status': '⚡ 能量回收中' if (is_braking and speed > 0) else '无能量回收',
         }
 
     def get_ahbc_status(self) -> str:
@@ -807,27 +807,27 @@ class VehicleDataParser:
             additional = self.data.get('data', {}).get('additionalVehicleStatus')
 
         if not additional:
-            return "Error: missing additionalVehicleStatus"
+            return "错误：缺少附加车辆状态"
 
         # 2. Try to read runningStatus
         running = additional.get('runningStatus')
         if not running:
-            return "Error: missing runningStatus"
+            return "错误：缺少运行状态"
 
         # 3. Look up the ahbc value
         ahbc_val = running.get('ahbc')
 
         # If the key is completely missing
         if ahbc_val is None:
-            return "Error: ahbc key not found"
+            return "错误：未找到防盗状态字段"
 
         # 4. Convert to a string and inspect it
         val_str = str(ahbc_val).strip()
 
         if val_str == '0':
-            return "Enabled"  # Знаhение 0
+            return "已启用"
         elif val_str == '1':
-            return "Disabled"  # Знаhение 1
+            return "已禁用"
 
         # If the value is unexpected (not 0 or 1), expose it
-        return f"Unknown (value: {val_str})"
+        return f"未知（值：{val_str}）"
